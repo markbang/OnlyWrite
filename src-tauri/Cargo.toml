@@ -22,6 +22,8 @@ tauri-plugin-shell = "2"
 tauri-plugin-process = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-os = "2.0.0"
+base64 = "0.21.0"
+uuid = { version = "1.4.1", features = ["v4", "serde"] }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
