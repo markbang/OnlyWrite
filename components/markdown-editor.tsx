@@ -15,7 +15,7 @@ import {
 } from '@mdxeditor/editor'
 import '@mdxeditor/editor/style.css'
 import { join } from '@tauri-apps/api/path'
-import { BaseDirectory, writeBinaryFile } from '@tauri-apps/plugin-fs'
+import { writeFile } from '@tauri-apps/plugin-fs'
 
 interface MarkdownEditorProps extends MDXEditorProps {
   editorRef?: React.ForwardedRef<MDXEditorMethods>
@@ -37,7 +37,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
     const reader = new FileReader()
     reader.readAsArrayBuffer(image)
     reader.onload = async () => {
-      await writeBinaryFile(imagePath, new Uint8Array(reader.result as ArrayBuffer))
+      await writeFile(imagePath, new Uint8Array(reader.result as ArrayBuffer))
     }
 
     return imagePath

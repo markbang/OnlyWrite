@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { FileArea } from "@/components/file-area"
@@ -13,6 +16,13 @@ import {
 } from "@/components/ui/sidebar"
 
 export default function Page() {
+  const [folderPath] = useState<string | null>(null)
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null)
+
+  const handleFileSelect = (filePath: string) => {
+    setSelectedFilePath(filePath)
+  }
+
   return (
     <SidebarProvider
       style={
@@ -33,11 +43,17 @@ export default function Page() {
                 className="h-full flex-1 rounded-lg border"
               >
                 <ResizablePanel defaultSize={25}>
-                  <FileArea />
+                  <FileArea 
+                    folderPath={folderPath}
+                    onFileSelect={handleFileSelect}
+                  />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={75}>
-                  <WritingArea />
+                  <WritingArea 
+                    folderPath={folderPath}
+                    filePath={selectedFilePath}
+                  />
                 </ResizablePanel>
               </ResizablePanelGroup>
             </div>
