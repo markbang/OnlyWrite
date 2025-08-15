@@ -5,9 +5,8 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { checkForAppUpdates } from '@/lib/updater';
 
-import { invoke } from '@tauri-apps/api/core';
-import { message } from '@tauri-apps/plugin-dialog';
-import { useTauriAppVersion, useTauriOsType } from '@/hooks/useTauriApp';
+import { open } from '@tauri-apps/plugin-dialog';
+import { useTauriAppVersion } from '@/hooks/useTauriApp';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -18,35 +17,30 @@ import { WritingArea } from '@/components/writing-area';
 
 export default function Home() {
   const appVersion = useTauriAppVersion();
-  const osType = useTauriOsType();
 
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-  // 新增状态追踪 scoop 更新过程
-  const [isUpdatingScoop, setIsUpdatingScoop] = useState(false);
+  const [folderPath, setFolderPath] = useState<string | null>(null);
+  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
   // 使用 useEffect 在组件挂载时检查更新和获取操作系统类型
   useEffect(() => {
     checkForAppUpdates(false);
   }, []);
 
-  // 将 scoopUpdate 移动到组件内部
-  const scoopUpdate = () => {
-    if (osType !== 'windows') {
-      message('仅支持 Windows 系统的 Scoop 更新');
-      return;
+  const openFolder = async () => {
+    const result = await open({
+      directory: true,
+      multiple: false,
+    });
+
+    if (typeof result === 'string') {
+      setFolderPath(result);
+      setSelectedFilePath(null);
     }
-    setIsUpdatingScoop(true);
-    invoke('scoop_update')
-      .then(() => {
-        message('Scoop 更新完成');
-      })
-      .catch((error) => {
-        console.error(error);
-        message('更新失败，请检查 Scoop 是否安装');
-      })
-      .finally(() => {
-        setIsUpdatingScoop(false);
-      });
+  };
+
+  const handleFileSelect = (filePath: string) => {
+    setSelectedFilePath(filePath);
   };
 
   return (
@@ -67,21 +61,6 @@ export default function Home() {
           <h1 className='text-xl font-semibold text-slate-800'>OnlyWrite</h1>
         </div>
         <div className='flex items-center gap-2'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={scoopUpdate}
-            disabled={isUpdatingScoop}
-          >
-            {isUpdatingScoop ? (
-              <>
-                <span className='mr-2 h-4 w-4 animate-spin'>◌</span>
-                更新中...
-              </>
-            ) : (
-              'Update Scoop App'
-            )}
-          </Button>
           <Button variant='ghost' size='sm'>
             帮助
           </Button>
@@ -119,26 +98,7 @@ export default function Home() {
                 variant='ghost'
                 className='w-full justify-start'
                 size='sm'
-              >
-                <svg
-                  className='mr-2 h-4 w-4'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M12 4v16m8-8H4'
-                  />
-                </svg>
-                新建文档
-              </Button>
-              <Button
-                variant='ghost'
-                className='w-full justify-start'
-                size='sm'
+                onClick={openFolder}
               >
                 <svg
                   className='mr-2 h-4 w-4'
@@ -153,72 +113,7 @@ export default function Home() {
                     d='M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z'
                   />
                 </svg>
-                打开项目
-              </Button>
-              <Button
-                variant='ghost'
-                className='w-full justify-start'
-                size='sm'
-              >
-                <svg
-                  className='mr-2 h-4 w-4'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z'
-                  />
-                </svg>
-                收藏夹
-              </Button>
-            </div>
-          </div>
-          <div>
-            <h3 className='mb-3 font-medium text-slate-500'>最近文档</h3>
-            <div className='space-y-1'>
-              <Button
-                variant='ghost'
-                className='w-full justify-start text-left'
-                size='sm'
-              >
-                <svg
-                  className='mr-2 h-4 w-4'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'
-                  />
-                </svg>
-                我的第一篇文章.md
-              </Button>
-              <Button
-                variant='ghost'
-                className='w-full justify-start text-left'
-                size='sm'
-              >
-                <svg
-                  className='mr-2 h-4 w-4'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'
-                  />
-                </svg>
-                项目规划.md
+                打开文件夹
               </Button>
             </div>
           </div>
@@ -228,11 +123,17 @@ export default function Home() {
         <main className='flex-1 flex flex-col overflow-hidden'>
           <ResizablePanelGroup direction='horizontal' className='flex-1'>
             <ResizablePanel defaultSize={25} minSize={15}>
-              <FileArea />
+              <FileArea
+                folderPath={folderPath}
+                onFileSelect={handleFileSelect}
+              />
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={75} minSize={30}>
-              <WritingArea />
+              <WritingArea
+                folderPath={folderPath}
+                filePath={selectedFilePath}
+              />
             </ResizablePanel>
           </ResizablePanelGroup>
         </main>
