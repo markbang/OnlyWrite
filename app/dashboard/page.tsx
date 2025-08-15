@@ -1,6 +1,10 @@
+"use client"
+
+import { useState } from "react"
+import { invoke } from "@tauri-apps/api"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
-import { FileArea } from "@/components/file-area"
+import { FileArea, FileNode } from "@/components/file-area"
 import { WritingArea } from "@/components/writing-area"
 import {
   ResizableHandle,
@@ -12,7 +16,27 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 
+interface OpenFolderResult {
+  root_path: string
+  tree: FileNode[]
+}
+
 export default function Page() {
+  const [fileTree, setFileTree] = useState<FileNode[]>([])
+  const [rootPath, setRootPath] = useState<string | null>(null)
+
+  const handleOpenFolder = async () => {
+    try {
+      const result = await invoke<OpenFolderResult>("open_folder")
+      if (result) {
+        setFileTree(result.tree)
+        setRootPath(result.root_path)
+      }
+    } catch (error) {
+      console.error("Failed to open folder:", error)
+    }
+  }
+
   return (
     <SidebarProvider
       style={
@@ -22,7 +46,7 @@ export default function Page() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" onOpenFolder={handleOpenFolder} />
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">
@@ -33,11 +57,11 @@ export default function Page() {
                 className="h-full flex-1 rounded-lg border"
               >
                 <ResizablePanel defaultSize={25}>
-                  <FileArea />
+                  <FileArea fileTree={fileTree} />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={75}>
-                  <WritingArea />
+                  <WritingArea rootPath={rootPath} />
                 </ResizablePanel>
               </ResizablePanelGroup>
             </div>
