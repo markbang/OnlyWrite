@@ -14,6 +14,13 @@
     "core:window:allow-unmaximize",
     "os:default",
     "os:allow-os-type",
-    "os:allow-platform"
+    "os:allow-platform",
+    "fs:allow-read-dir",
+    "fs:allow-read-file", 
+    "fs:allow-write-file",
+    "fs:allow-home-read-recursive",
+    "fs:allow-desktop-read-recursive",
+    "fs:allow-document-read-recursive",
+    "fs:allow-download-read-recursive"
   ]
 }
