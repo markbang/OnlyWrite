@@ -63,28 +63,14 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
   }, [isModified, currentFilePath, markdown]);
 
   // 快捷键支持
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 's') {
-        event.preventDefault()
-        handleSave()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [])
-
-  const handleSave = async () => {
-    if (isSaving) return
+  const handleSave = useCallback(async () => {
+    if (isSaving) return;
     
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       // 从编辑器获取最新内容
-      const currentContent = editorRef.current?.getMarkdown() || markdown
-      let savePath = currentFilePath
+      const currentContent = editorRef.current?.getMarkdown() || markdown;
+      let savePath = currentFilePath;
 
       if (!savePath) {
         savePath = await save({
@@ -94,24 +80,38 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
               extensions: ['md'],
             },
           ],
-        })
+        });
       }
 
       if (savePath) {
-        await writeTextFile(savePath, currentContent)
-        setCurrentFilePath(savePath)
-        setMarkdown(currentContent)
-        setIsModified(false)
-        setWordCount(calculateWordCount(currentContent))
-        console.log('文件已保存:', savePath)
+        await writeTextFile(savePath, currentContent);
+        setCurrentFilePath(savePath);
+        setMarkdown(currentContent);
+        setIsModified(false);
+        setWordCount(calculateWordCount(currentContent));
+        console.log('文件已保存:', savePath);
       }
     } catch (error) {
-      console.error('保存失败:', error)
-      alert('保存失败: ' + error)
+      console.error('保存失败:', error);
+      alert('保存失败: ' + error);
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  }, [isSaving, markdown, currentFilePath, calculateWordCount]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 's') {
+        event.preventDefault();
+        handleSave();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleSave]);
 
   const handleContentChange = (content: string) => {
     setMarkdown(content)

@@ -22,7 +22,7 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
-export function ThemeProvider(props: ThemeProviderProps) {
+export function ThemeProvider(props: ThemeProviderProps): JSX.Element {
   const { children, defaultTheme = 'system', storageKey = 'onlywrite-theme' } = props
   
   const [theme, setTheme] = useState<Theme>(() => {

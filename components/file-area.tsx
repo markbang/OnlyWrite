@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { readDir, writeTextFile } from '@tauri-apps/plugin-fs';
 import { join } from '@tauri-apps/api/path';
 import { Button } from './ui/button';
@@ -19,13 +19,7 @@ export function FileArea({ folderPath, onFileSelect }: FileAreaProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (folderPath) {
-      loadFiles();
-    }
-  }, [folderPath]);
-
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     if (!folderPath) return;
     
     try {
@@ -47,7 +41,13 @@ export function FileArea({ folderPath, onFileSelect }: FileAreaProps) {
     } catch (error) {
       console.error('加载文件失败:', error);
     }
-  };
+  }, [folderPath]);
+
+  useEffect(() => {
+    if (folderPath) {
+      loadFiles();
+    }
+  }, [folderPath, loadFiles]);
 
   const handleFileClick = async (fileName: string, isFile: boolean) => {
     if (folderPath && isFile) {
