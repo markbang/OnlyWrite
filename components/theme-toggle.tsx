@@ -1,16 +1,42 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useTheme } from '@/hooks/useTheme'
+import { useEffect, useState } from 'react'
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const [theme, setTheme] = useState<'dark' | 'light'>('light')
+
+  useEffect(() => {
+    // 从本地存储获取主题设置
+    const savedTheme = localStorage.getItem('onlywrite-theme') as 'dark' | 'light'
+    if (savedTheme) {
+      setTheme(savedTheme)
+    } else {
+      // 检查系统主题偏好
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      setTheme(systemTheme)
+    }
+  }, [])
+
+  useEffect(() => {
+    // 更新文档类
+    const root = document.documentElement
+    root.classList.remove('light', 'dark')
+    root.classList.add(theme)
+    
+    // 保存到本地存储
+    localStorage.setItem('onlywrite-theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+  }
 
   return (
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+      onClick={toggleTheme}
       className="relative"
     >
       <svg

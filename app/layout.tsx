@@ -3,7 +3,6 @@
 import './globals.css';
 import './editor-theme.css';
 import { useGlobalEventListeners } from '@/hooks/useGlobalEventListeners';
-import { ThemeProvider } from '@/hooks/useTheme';
 
 export default function RootLayout({
   children,
@@ -14,12 +13,7 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body className={`antialiased`}>
-        <ThemeProvider
-          defaultTheme="system"
-          storageKey="onlywrite-theme"
-        >
-          {children}
-        </ThemeProvider>
+        {children}
       </body>
     </html>
   );

@@ -1,8 +1,11 @@
 {
   "permissions": {
-    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(rm:*)"
+    ],
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "C:\\Github\\OnlyWrite"
     ]
   }
 }
