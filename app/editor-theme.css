@@ -1,0 +1,157 @@
+/* MDXEditor 暗色主题自定义样式 */
+.dark .mdxeditor-root {
+  --mdxeditor-bg-color: rgb(15 23 42); /* slate-900 */
+  --mdxeditor-text-color: rgb(241 245 249); /* slate-100 */
+  --mdxeditor-border-color: rgb(51 65 85); /* slate-700 */
+  --mdxeditor-toolbar-bg: rgb(30 41 59); /* slate-800 */
+  --mdxeditor-button-bg: transparent;
+  --mdxeditor-button-hover-bg: rgb(51 65 85); /* slate-700 */
+  --mdxeditor-button-active-bg: rgb(71 85 105); /* slate-600 */
+}
+
+/* 暗色主题下的工具栏样式 */
+.dark .mdxeditor-toolbar {
+  background-color: var(--mdxeditor-toolbar-bg);
+  border-bottom-color: var(--mdxeditor-border-color);
+  color: var(--mdxeditor-text-color);
+}
+
+/* 暗色主题下的按钮样式 */
+.dark .mdxeditor-toolbar button {
+  color: var(--mdxeditor-text-color);
+  background-color: var(--mdxeditor-button-bg);
+}
+
+.dark .mdxeditor-toolbar button:hover {
+  background-color: var(--mdxeditor-button-hover-bg);
+}
+
+.dark .mdxeditor-toolbar button[data-state="on"] {
+  background-color: var(--mdxeditor-button-active-bg);
+}
+
+/* 暗色主题下的编辑区域 */
+.dark .mdxeditor .mdxeditor-rich-text-editor {
+  background-color: var(--mdxeditor-bg-color);
+  color: var(--mdxeditor-text-color);
+}
+
+/* 暗色主题下的代码块样式 */
+.dark .mdxeditor .cm-editor {
+  background-color: rgb(30 41 59); /* slate-800 */
+  color: var(--mdxeditor-text-color);
+}
+
+.dark .mdxeditor .cm-editor .cm-focused {
+  outline: none;
+}
+
+/* 暗色主题下的选择器样式 */
+.dark .mdxeditor-toolbar select {
+  background-color: var(--mdxeditor-toolbar-bg);
+  color: var(--mdxeditor-text-color);
+  border-color: var(--mdxeditor-border-color);
+}
+
+/* 暗色主题下的分隔线 */
+.dark .mdxeditor-toolbar .mdxeditor-toolbar-separator {
+  background-color: var(--mdxeditor-border-color);
+}
+
+/* 暗色主题下的弹窗样式 */
+.dark .mdxeditor-popup {
+  background-color: var(--mdxeditor-toolbar-bg);
+  border-color: var(--mdxeditor-border-color);
+  color: var(--mdxeditor-text-color);
+}
+
+/* 滚动条样式 */
+.mdxeditor-root ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.mdxeditor-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mdxeditor-root ::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184); /* slate-400 */
+  border-radius: 3px;
+}
+
+.dark .mdxeditor-root ::-webkit-scrollbar-thumb {
+  background: rgb(71 85 105); /* slate-600 */
+}
+
+.mdxeditor-root ::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139); /* slate-500 */
+}
+
+.dark .mdxeditor-root ::-webkit-scrollbar-thumb:hover {
+  background: rgb(100 116 139); /* slate-500 */
+}
+
+/* 语法高亮增强 */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: rgb(14 165 233); /* sky-500 */
+}
+
+.dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 {
+  color: rgb(56 189 248); /* sky-400 */
+}
+
+.prose strong {
+  color: rgb(239 68 68); /* red-500 */
+}
+
+.dark .prose strong {
+  color: rgb(248 113 113); /* red-400 */
+}
+
+.prose em {
+  color: rgb(168 85 247); /* purple-500 */
+}
+
+.dark .prose em {
+  color: rgb(196 181 253); /* purple-300 */
+}
+
+.prose code {
+  background-color: rgb(241 245 249); /* slate-100 */
+  color: rgb(220 38 127); /* pink-600 */
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.dark .prose code {
+  background-color: rgb(51 65 85); /* slate-700 */
+  color: rgb(244 114 182); /* pink-400 */
+}
+
+.prose blockquote {
+  border-left-color: rgb(14 165 233); /* sky-500 */
+  background-color: rgb(240 249 255); /* sky-50 */
+}
+
+.dark .prose blockquote {
+  border-left-color: rgb(56 189 248); /* sky-400 */
+  background-color: rgb(12 74 110); /* sky-900 */
+}
+
+.prose a {
+  color: rgb(14 165 233); /* sky-500 */
+}
+
+.dark .prose a {
+  color: rgb(56 189 248); /* sky-400 */
+}
+
+.prose a:hover {
+  color: rgb(2 132 199); /* sky-600 */
+}
+
+.dark .prose a:hover {
+  color: rgb(14 165 233); /* sky-500 */
+}

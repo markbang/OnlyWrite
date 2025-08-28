@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { MDXEditorMethods } from '@mdxeditor/editor'
 import { Button } from './ui/button'
@@ -17,7 +17,16 @@ interface WritingAreaProps {
 export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
   const [markdown, setMarkdown] = useState('')
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null)
+  const [isModified, setIsModified] = useState(false)
+  const [wordCount, setWordCount] = useState(0)
+  const [isSaving, setIsSaving] = useState(false)
   const editorRef = React.useRef<MDXEditorMethods>(null)
+
+  // 计算字数
+  const calculateWordCount = useCallback((text: string) => {
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0)
+    return words.length
+  }, [])
 
   useEffect(() => {
     if (filePath) {
@@ -25,44 +34,123 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
       readTextFile(filePath)
         .then((content) => {
           setMarkdown(content)
+          setWordCount(calculateWordCount(content))
+          setIsModified(false)
           editorRef.current?.setMarkdown(content)
         })
         .catch(console.error)
     }
-  }, [filePath])
+  }, [filePath, calculateWordCount])
 
-  const handleSave = async () => {
-    let savePath = currentFilePath
+  // 自动保存功能
+  useEffect(() => {
+    if (!isModified || !currentFilePath) return;
 
-    if (!savePath) {
-      savePath = await save({
-        filters: [
-          {
-            name: 'Markdown',
-            extensions: ['md'],
-          },
-        ],
-      })
+    const autoSaveTimer = setTimeout(async () => {
+      try {
+        const currentContent = editorRef.current?.getMarkdown() || markdown;
+        await writeTextFile(currentFilePath, currentContent);
+        setIsModified(false);
+        console.log('自动保存:', currentFilePath);
+      } catch (error) {
+        console.error('自动保存失败:', error);
+      }
+    }, 5000); // 5秒后自动保存
+
+    return () => {
+      clearTimeout(autoSaveTimer);
+    };
+  }, [isModified, currentFilePath, markdown]);
+
+  // 快捷键支持
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 's') {
+        event.preventDefault()
+        handleSave()
+      }
     }
 
-    if (savePath) {
-      await writeTextFile(savePath, markdown)
-      setCurrentFilePath(savePath)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  const handleSave = async () => {
+    if (isSaving) return
+    
+    setIsSaving(true)
+    try {
+      // 从编辑器获取最新内容
+      const currentContent = editorRef.current?.getMarkdown() || markdown
+      let savePath = currentFilePath
+
+      if (!savePath) {
+        savePath = await save({
+          filters: [
+            {
+              name: 'Markdown',
+              extensions: ['md'],
+            },
+          ],
+        })
+      }
+
+      if (savePath) {
+        await writeTextFile(savePath, currentContent)
+        setCurrentFilePath(savePath)
+        setMarkdown(currentContent)
+        setIsModified(false)
+        setWordCount(calculateWordCount(currentContent))
+        console.log('文件已保存:', savePath)
+      }
+    } catch (error) {
+      console.error('保存失败:', error)
+      alert('保存失败: ' + error)
+    } finally {
+      setIsSaving(false)
     }
   }
 
+  const handleContentChange = (content: string) => {
+    setMarkdown(content)
+    setIsModified(true)
+    setWordCount(calculateWordCount(content))
+  }
+
   return (
-    <div className="flex h-full flex-col rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-slate-700">Writing Area</h2>
-        <Button onClick={handleSave}>Save</Button>
+    <div className="flex h-full flex-col">
+      {/* 顶部工具栏 */}
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 transition-colors">
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+            {currentFilePath ? currentFilePath.split(/[\\/]/).pop() : '未命名文档'}
+            {isModified && <span className="text-amber-600 dark:text-amber-400 ml-1">*</span>}
+          </h2>
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {wordCount} 字
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white"
+          >
+            {isSaving ? '保存中...' : '保存 (Ctrl+S)'}
+          </Button>
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+
+      {/* 编辑器区域 */}
+      <div className="flex-1 overflow-hidden bg-white dark:bg-slate-900 transition-colors">
         <MarkdownEditor
           editorRef={editorRef}
           markdown={markdown}
-          onChange={(md) => setMarkdown(md)}
-          placeholder="Start writing here..."
+          onChange={handleContentChange}
+          placeholder="开始写作..."
           folderPath={folderPath}
         />
       </div>
