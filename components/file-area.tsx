@@ -107,16 +107,16 @@ export function FileArea({ folderPath, onFileSelect }: FileAreaProps) {
   };
 
   return (
-    <div className='flex h-full flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 transition-colors'>
+    <div className='interface-section flex h-full flex-col bg-background border-r border-border transition-colors'>
       {/* 头部 */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-        <h2 className='text-sm font-semibold text-slate-700 dark:text-slate-300'>文件浏览</h2>
+      <div className="interface-section-header flex items-center justify-between">
+        <h2 className='text-sm font-semibold text-foreground'>文件浏览</h2>
         {folderPath && (
           <Button
             onClick={handleCreateFile}
             size="sm"
             variant="ghost"
-            className="text-xs h-7 px-2 dark:text-slate-300 dark:hover:text-slate-100"
+            className="text-xs h-7 px-2 transition-all duration-200 ease-in-out hover:scale-105 active:scale-95"
           >
             + 新建
           </Button>
@@ -124,18 +124,19 @@ export function FileArea({ folderPath, onFileSelect }: FileAreaProps) {
       </div>
 
       {/* 文件列表 */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="interface-section-content flex-1 overflow-y-auto">
         {folderPath ? (
-          <ul className='p-2 space-y-1'>
+          <ul className='spacing-xs flex flex-col'>
             {files.map((entry, index) => (
               <li
                 key={index}
-                className={`flex items-center gap-2 cursor-pointer rounded-md px-3 py-2 text-sm transition-colors
+                className={`file-list-item flex items-center cursor-pointer rounded-md text-sm transition-all duration-200 ease-in-out selection-primary
                   ${selectedFile === entry.name && entry.isFile 
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 font-medium' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
+                    ? 'bg-primary/10 text-primary font-medium border border-primary/20 shadow-sm padding-md' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50 hover:shadow-sm active:bg-accent/70 padding-sm'
                   }
                   ${!entry.isFile ? 'opacity-60' : ''}
+                  hover:scale-[1.02] active:scale-[0.98] spacing-sm
                 `}
                 onClick={() => handleFileClick(entry.name, entry.isFile)}
               >
@@ -144,13 +145,13 @@ export function FileArea({ folderPath, onFileSelect }: FileAreaProps) {
               </li>
             ))}
             {files.length === 0 && (
-              <li className="text-center text-sm text-slate-400 dark:text-slate-500 py-8">
+              <li className="text-center text-sm text-muted-foreground padding-3xl">
                 文件夹为空
               </li>
             )}
           </ul>
         ) : (
-          <div className="flex items-center justify-center h-full text-sm text-slate-400 dark:text-slate-500">
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
             请先选择一个文件夹
           </div>
         )}

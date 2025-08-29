@@ -29,7 +29,14 @@ export function ThemeToggle() {
   }, [theme])
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+    // Add a brief delay to prevent flash during theme transition
+    document.body.style.transition = 'none';
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    
+    // Re-enable transitions after theme change
+    requestAnimationFrame(() => {
+      document.body.style.transition = '';
+    });
   }
 
   return (
@@ -37,10 +44,12 @@ export function ThemeToggle() {
       variant="ghost"
       size="sm"
       onClick={toggleTheme}
-      className="relative"
+      className="relative transition-all duration-200 ease-in-out hover:scale-105 active:scale-95"
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
     >
       <svg
-        className={`h-4 w-4 transition-all ${
+        className={`h-4 w-4 transition-all duration-300 ease-in-out ${
           theme === 'dark' ? 'rotate-90 scale-0' : 'rotate-0 scale-100'
         }`}
         fill="none"
@@ -51,7 +60,7 @@ export function ThemeToggle() {
         <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
       </svg>
       <svg
-        className={`absolute h-4 w-4 transition-all ${
+        className={`absolute h-4 w-4 transition-all duration-300 ease-in-out ${
           theme === 'dark' ? 'rotate-0 scale-100' : '-rotate-90 scale-0'
         }`}
         fill="none"

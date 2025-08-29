@@ -120,24 +120,24 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="interface-section flex h-full flex-col">
       {/* 顶部工具栏 */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 transition-colors">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+      <div className="interface-section-header flex items-center justify-between">
+        <div className="flex items-center spacing-lg">
+          <h2 className="text-lg font-semibold text-foreground">
             {currentFilePath ? currentFilePath.split(/[\\/]/).pop() : '未命名文档'}
             {isModified && <span className="text-amber-600 dark:text-amber-400 ml-1">*</span>}
           </h2>
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-muted-foreground">
             {wordCount} 字
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center spacing-sm">
           <Button 
             onClick={handleSave} 
             disabled={isSaving}
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 disabled:hover:scale-100"
           >
             {isSaving ? '保存中...' : '保存 (Ctrl+S)'}
           </Button>
@@ -145,7 +145,7 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
       </div>
 
       {/* 编辑器区域 */}
-      <div className="flex-1 overflow-hidden bg-white dark:bg-slate-900 transition-colors">
+      <div className="flex-1 overflow-hidden bg-background transition-colors">
         <MarkdownEditor
           editorRef={editorRef}
           markdown={markdown}

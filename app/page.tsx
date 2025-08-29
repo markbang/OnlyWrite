@@ -45,13 +45,13 @@ export default function Home() {
   };
 
   return (
-    <div className='flex h-screen flex-col bg-slate-50 dark:bg-slate-900 transition-colors'>
+    <div className='flex h-screen flex-col bg-muted transition-colors'>
       {/* 顶部导航栏 */}
       <header
-        className='flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-3 shadow-sm transition-colors'
+        className='interface-section-header flex items-center justify-between shadow-medium transition-colors'
         data-tauri-drag-region
       >
-        <div className='flex items-center gap-3'>
+        <div className='flex items-center spacing-md'>
           <Image
             src='/app-icon.svg'
             alt='OnlyWrite app icon'
@@ -60,14 +60,14 @@ export default function Home() {
             priority
           />
           <div>
-            <h1 className='text-lg font-bold text-slate-800 dark:text-slate-200'>OnlyWrite</h1>
-            <p className='text-xs text-slate-500 dark:text-slate-400'>专注写作的 Markdown 编辑器</p>
+            <h1 className='text-lg font-bold text-foreground'>OnlyWrite</h1>
+            <p className='text-xs text-muted-foreground'>专注写作的 Markdown 编辑器</p>
           </div>
         </div>
         
-        <div className='flex items-center gap-3'>
+        <div className='flex items-center spacing-md'>
           {folderPath && (
-            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+            <div className="flex items-center spacing-sm text-sm text-muted-foreground">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
@@ -77,7 +77,7 @@ export default function Home() {
           
           <ThemeToggle />
           
-          <Button variant='ghost' size='sm' className="text-slate-600 dark:text-slate-400">
+          <Button variant='ghost' size='sm' className="text-muted-foreground">
             帮助
           </Button>
           
@@ -91,7 +91,7 @@ export default function Home() {
               });
             }}
             disabled={isCheckingUpdate}
-            className="border-slate-300 dark:border-slate-600 dark:text-slate-300"
+            className="border-border text-foreground"
           >
             {isCheckingUpdate ? (
               <>
@@ -109,18 +109,18 @@ export default function Home() {
       <div className='flex flex-1 overflow-hidden'>
         {!folderPath ? (
           /* 欢迎页面 */
-          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 transition-colors">
-            <div className="text-center max-w-md">
-              <div className="mb-8">
+          <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background to-muted transition-colors">
+            <div className="interface-section text-center max-w-md padding-3xl rounded-lg">
+              <div className="margin-2xl">
                 <Image
                   src='/app-icon.svg'
                   alt='OnlyWrite'
                   width={64}
                   height={64}
-                  className="mx-auto mb-4 opacity-60 dark:opacity-80"
+                  className="mx-auto margin-lg opacity-60 dark:opacity-80"
                 />
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">欢迎使用 OnlyWrite</h2>
-                <p className="text-slate-600 dark:text-slate-400 mb-8">
+                <h2 className="text-2xl font-bold text-foreground margin-sm">欢迎使用 OnlyWrite</h2>
+                <p className="text-muted-foreground margin-2xl">
                   一个简洁优雅的 Markdown 写作应用<br />
                   开始你的写作之旅吧
                 </p>
@@ -129,7 +129,7 @@ export default function Home() {
               <Button
                 onClick={openFolder}
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-8 py-3 text-lg transition-colors"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground padding-lg text-lg transition-all duration-200 ease-in-out hover:scale-105 active:scale-95 shadow-medium"
               >
                 <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -137,10 +137,10 @@ export default function Home() {
                 选择工作文件夹
               </Button>
               
-              <div className="mt-8 text-sm text-slate-500 dark:text-slate-400">
+              <div className="margin-2xl text-sm text-muted-foreground">
                 <p>快捷键提示：</p>
-                <div className="mt-2 space-y-1">
-                  <div><kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-xs">Ctrl + S</kbd> 保存文件</div>
+                <div className="margin-sm spacing-xs flex flex-col">
+                  <div><kbd className="padding-xs bg-muted rounded text-xs">Ctrl + S</kbd> 保存文件</div>
                 </div>
               </div>
             </div>
@@ -166,16 +166,16 @@ export default function Home() {
       </div>
 
       {/* 底部状态栏 */}
-      <footer className='border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs text-slate-500 dark:text-slate-400 transition-colors'>
+      <footer className='border-t border-border bg-background padding-sm text-xs text-muted-foreground transition-colors shadow-subtle'>
         <div className='flex items-center justify-between'>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center spacing-lg">
             <span>© {new Date().getFullYear()} OnlyWrite</span>
             {folderPath && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={openFolder}
-                className="h-6 px-2 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                className="h-6 padding-xs text-xs text-muted-foreground hover:text-foreground"
               >
                 切换文件夹
               </Button>

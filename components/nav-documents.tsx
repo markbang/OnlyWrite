@@ -26,9 +26,9 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavDocuments({
-  items,
+  items = [],
 }: {
-  items: {
+  items?: {
     name: string
     url: string
     icon: Icon
@@ -42,7 +42,7 @@ export function NavDocuments({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="hover:shadow-soft active:shadow-subtle">
               <a href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
@@ -52,27 +52,27 @@ export function NavDocuments({
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction
                   showOnHover
-                  className="data-[state=open]:bg-accent rounded-sm"
+                  className="data-[state=open]:bg-accent rounded-sm shadow-subtle hover:shadow-soft"
                 >
                   <IconDots />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-24 rounded-lg"
+                className="w-24 rounded-lg shadow-medium border-border"
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem>
+                <DropdownMenuItem className="spacing-sm">
                   <IconFolder />
                   <span>Open</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem className="spacing-sm">
                   <IconShare3 />
                   <span>Share</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem variant="destructive" className="spacing-sm">
                   <IconTrash />
                   <span>Delete</span>
                 </DropdownMenuItem>
@@ -81,7 +81,7 @@ export function NavDocuments({
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
+          <SidebarMenuButton className="text-sidebar-foreground/70 hover:shadow-soft active:shadow-subtle">
             <IconDots className="text-sidebar-foreground/70" />
             <span>More</span>
           </SidebarMenuButton>
