@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { beforeAll, afterEach } from 'vitest'
+import { beforeAll, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
 // Mock next-themes
