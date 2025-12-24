@@ -26,6 +26,7 @@ import {
 import '@mdxeditor/editor/style.css'
 import { join } from '@tauri-apps/api/path'
 import { writeFile } from '@tauri-apps/plugin-fs'
+import { Separator } from './ui/separator'
 
 interface MarkdownEditorProps extends MDXEditorProps {
   editorRef?: React.ForwardedRef<MDXEditorMethods>
@@ -54,20 +55,20 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   }
 
   return (
-    <div className="h-full w-full overflow-auto">
+    <div className="h-full w-full overflow-hidden">
       <MDXEditor
         plugins={[
           toolbarPlugin({
             toolbarContents: () => (
-              <div className="flex flex-wrap items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-0 z-10">
+              <div className="flex flex-wrap items-center gap-1 border-b border-border bg-background/90 px-3 py-2 backdrop-blur sticky top-0 z-10">
                 <UndoRedo />
-                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
+                <Separator orientation="vertical" className="mx-2 h-6" />
                 <BlockTypeSelect />
-                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
+                <Separator orientation="vertical" className="mx-2 h-6" />
                 <BoldItalicUnderlineToggles />
-                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
+                <Separator orientation="vertical" className="mx-2 h-6" />
                 <CreateLink />
-                <div className="w-px h-6 bg-slate-300 dark:bg-slate-600 mx-2" />
+                <Separator orientation="vertical" className="mx-2 h-6" />
                 <InsertTable />
                 <InsertCodeBlock />
               </div>
@@ -104,7 +105,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           }),
           imagePlugin({ imageUploadHandler }),
         ]}
-        contentEditableClassName="prose prose-slate dark:prose-invert max-w-none p-6 min-h-screen focus:outline-none bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+        contentEditableClassName="markdown-editor max-w-none p-6 min-h-screen focus:outline-none bg-background text-foreground"
         {...props}
         ref={editorRef}
         className="h-full overflow-auto"

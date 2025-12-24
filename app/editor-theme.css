@@ -325,6 +325,153 @@
   color: var(--syntax-operator);
 }
 
+/* Unified markdown typography (editor + preview) */
+.markdown-editor,
+.markdown-preview {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+
+.markdown-editor h1,
+.markdown-preview h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 1.6rem 0 0.8rem;
+  font-weight: 700;
+}
+
+.markdown-editor h2,
+.markdown-preview h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  margin: 1.4rem 0 0.6rem;
+  font-weight: 650;
+}
+
+.markdown-editor h3,
+.markdown-preview h3 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin: 1.2rem 0 0.5rem;
+  font-weight: 600;
+}
+
+.markdown-editor h4,
+.markdown-preview h4 {
+  font-size: 1.1rem;
+  margin: 1rem 0 0.4rem;
+  font-weight: 600;
+}
+
+.markdown-editor p,
+.markdown-preview p {
+  margin: 0.8rem 0;
+}
+
+.markdown-editor ul,
+.markdown-preview ul,
+.markdown-editor ol,
+.markdown-preview ol {
+  margin: 0.8rem 0 0.8rem 1.2rem;
+  padding: 0;
+}
+
+.markdown-editor li,
+.markdown-preview li {
+  margin: 0.35rem 0;
+}
+
+.markdown-editor blockquote,
+.markdown-preview blockquote {
+  border-left: 3px solid var(--border-medium);
+  background: var(--muted);
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  color: var(--muted-foreground);
+  border-radius: 0.5rem;
+}
+
+.markdown-editor hr,
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.markdown-editor a,
+.markdown-preview a {
+  color: var(--syntax-link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--syntax-link) 60%, transparent);
+  text-underline-offset: 3px;
+}
+
+.markdown-editor a:hover,
+.markdown-preview a:hover {
+  color: var(--syntax-link-hover);
+}
+
+.markdown-editor code,
+.markdown-preview code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--code-block-bg);
+  border: 1px solid var(--code-block-border);
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.4rem;
+}
+
+.markdown-editor pre,
+.markdown-preview pre {
+  background: var(--code-block-bg);
+  border: 1px solid var(--code-block-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin: 1.2rem 0;
+  overflow-x: auto;
+  box-shadow: var(--shadow-subtle);
+}
+
+.markdown-editor pre code,
+.markdown-preview pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.markdown-editor table,
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+}
+
+.markdown-editor th,
+.markdown-preview th,
+.markdown-editor td,
+.markdown-preview td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+}
+
+.markdown-editor thead th,
+.markdown-preview thead th {
+  background: var(--muted);
+  font-weight: 600;
+}
+
+.markdown-editor img,
+.markdown-preview img {
+  max-width: 100%;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-soft);
+}
+
 .mdxeditor .cm-editor .cm-punctuation {
   color: var(--syntax-punctuation);
 }
