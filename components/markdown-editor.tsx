@@ -38,18 +38,39 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   folderPath,
   ...props
 }) => {
+  const uploadImageToS3 = async (image: File) => {
+    const formData = new FormData()
+    formData.append('file', image)
+
+    const response = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to upload image')
+    }
+
+    const data = (await response.json()) as { url: string }
+    return data.url
+  }
+
   const imageUploadHandler = async (image: File) => {
     if (!folderPath) {
-      return ''
+      try {
+        return await uploadImageToS3(image)
+      } catch (error) {
+        console.error('S3 upload failed', error)
+        return ''
+      }
     }
-    const imageName = `${Date.now()}-${image.name}`
+
+    const safeName = image.name.replace(/[^\w.-]/g, '-')
+    const imageName = `${Date.now()}-${safeName}`
     const imagePath = await join(folderPath, 'assets', imageName)
 
-    const reader = new FileReader()
-    reader.readAsArrayBuffer(image)
-    reader.onload = async () => {
-      await writeFile(imagePath, new Uint8Array(reader.result as ArrayBuffer))
-    }
+    const buffer = await image.arrayBuffer()
+    await writeFile(imagePath, new Uint8Array(buffer))
 
     return imagePath
   }
