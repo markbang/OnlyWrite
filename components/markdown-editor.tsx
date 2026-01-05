@@ -12,37 +12,105 @@ import {
   toolbarPlugin,
   BoldItalicUnderlineToggles,
   imagePlugin,
+  linkPlugin,
+  linkDialogPlugin,
+  tablePlugin,
+  InsertTable,
+  BlockTypeSelect,
+  CreateLink,
+  UndoRedo,
+  codeBlockPlugin,
+  codeMirrorPlugin,
+  InsertCodeBlock,
 } from '@mdxeditor/editor'
 import '@mdxeditor/editor/style.css'
+import { join } from '@tauri-apps/api/path'
+import { writeFile } from '@tauri-apps/plugin-fs'
+import { Separator } from './ui/separator'
 
 interface MarkdownEditorProps extends MDXEditorProps {
   editorRef?: React.ForwardedRef<MDXEditorMethods>
+  folderPath: string | null
 }
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   editorRef,
+  folderPath,
   ...props
 }) => {
+  const imageUploadHandler = async (image: File) => {
+    if (!folderPath) {
+      return ''
+    }
+    const imageName = `${Date.now()}-${image.name}`
+    const imagePath = await join(folderPath, 'assets', imageName)
+
+    const reader = new FileReader()
+    reader.readAsArrayBuffer(image)
+    reader.onload = async () => {
+      await writeFile(imagePath, new Uint8Array(reader.result as ArrayBuffer))
+    }
+
+    return imagePath
+  }
+
   return (
-    <MDXEditor
-      plugins={[
-        toolbarPlugin({
-          toolbarContents: () => (
-            <>
-              <BoldItalicUnderlineToggles />
-            </>
-          ),
-        }),
-        headingsPlugin(),
-        listsPlugin(),
-        quotePlugin(),
-        thematicBreakPlugin(),
-        imagePlugin(),
-      ]}
-      contentEditableClassName="prose"
-      {...props}
-      ref={editorRef}
-    />
+    <div className="h-full w-full overflow-hidden">
+      <MDXEditor
+        plugins={[
+          toolbarPlugin({
+            toolbarContents: () => (
+              <div className="flex flex-wrap items-center gap-1 border-b border-border bg-background/90 px-3 py-2 backdrop-blur sticky top-0 z-10">
+                <UndoRedo />
+                <Separator orientation="vertical" className="mx-2 h-6" />
+                <BlockTypeSelect />
+                <Separator orientation="vertical" className="mx-2 h-6" />
+                <BoldItalicUnderlineToggles />
+                <Separator orientation="vertical" className="mx-2 h-6" />
+                <CreateLink />
+                <Separator orientation="vertical" className="mx-2 h-6" />
+                <InsertTable />
+                <InsertCodeBlock />
+              </div>
+            ),
+          }),
+          headingsPlugin(),
+          listsPlugin(),
+          quotePlugin(),
+          thematicBreakPlugin(),
+          linkPlugin(),
+          linkDialogPlugin(),
+          tablePlugin(),
+          codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
+          codeMirrorPlugin({ 
+            codeBlockLanguages: {
+              js: 'JavaScript',
+              ts: 'TypeScript',
+              tsx: 'TypeScript React',
+              css: 'CSS',
+              html: 'HTML',
+              python: 'Python',
+              rust: 'Rust',
+              go: 'Go',
+              java: 'Java',
+              c: 'C',
+              cpp: 'C++',
+              sh: 'Shell',
+              json: 'JSON',
+              yaml: 'YAML',
+              xml: 'XML',
+              sql: 'SQL',
+              md: 'Markdown',
+            }
+          }),
+          imagePlugin({ imageUploadHandler }),
+        ]}
+        contentEditableClassName="markdown-editor max-w-none p-6 min-h-screen focus:outline-none bg-background text-foreground"
+        {...props}
+        ref={editorRef}
+        className="h-full overflow-auto"
+      />
+    </div>
   )
 }
 
