@@ -1,8 +1,12 @@
 export type Locale = 'en' | 'zh'
 
+type MessageTree = string | { [key: string]: MessageTree }
+
+type MessagesByLocale = Record<Locale, MessageTree>
+
 const STORAGE_KEY = 'onlywrite-locale'
 
-export const messages = {
+export const messages: MessagesByLocale = {
   en: {
     app: {
       title: 'OnlyWrite',
@@ -199,16 +203,23 @@ export function persistLocale(locale: Locale) {
   localStorage.setItem(STORAGE_KEY, locale)
 }
 
+function getNestedMessageValue(root: unknown, parts: readonly string[]): unknown {
+  let current: unknown = root
+
+  for (const part of parts) {
+    if (typeof current !== 'object' || current === null) return undefined
+    current = (current as Record<string, unknown>)[part]
+  }
+
+  return current
+}
+
 export function getMessage(locale: Locale, key: string) {
   const parts = key.split('.')
-  let value: any = messages[locale]
-  for (const part of parts) {
-    value = value?.[part]
-  }
+
+  const value = getNestedMessageValue(messages[locale], parts)
   if (typeof value === 'string') return value
-  let fallback: any = messages.en
-  for (const part of parts) {
-    fallback = fallback?.[part]
-  }
+
+  const fallback = getNestedMessageValue(messages.en, parts)
   return typeof fallback === 'string' ? fallback : key
 }
