@@ -1,17 +1,31 @@
-import { GalleryVerticalEnd } from "lucide-react"
+'use client'
 
 import { LoginForm } from "@/components/login-form"
+import Image from "next/image"
+import { useI18n } from "@/hooks/useI18n"
+import { LanguageToggle } from "@/components/language-toggle"
 
 export default function LoginPage() {
+  const { t } = useI18n()
+
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <a href="#" className="flex items-center gap-2 self-center font-medium">
-          <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-            <GalleryVerticalEnd className="size-4" />
+    <div className="flex min-h-svh items-center justify-center bg-gradient-to-br from-background via-muted/40 to-muted px-6 py-10">
+      <div className="flex w-full max-w-md flex-col gap-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/app-icon.svg"
+              alt="OnlyWrite app icon"
+              width={28}
+              height={28}
+            />
+            <div>
+              <div className="text-base font-semibold text-foreground">OnlyWrite</div>
+              <div className="text-xs text-muted-foreground">{t('app.subtitle')}</div>
+            </div>
           </div>
-          Acme Inc.
-        </a>
+          <LanguageToggle />
+        </div>
         <LoginForm />
       </div>
     </div>

@@ -2,8 +2,10 @@
 
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
+import { useI18n } from '@/hooks/useI18n'
 
 export function ThemeToggle() {
+  const { t } = useI18n()
   const [theme, setTheme] = useState<'dark' | 'light'>('light')
 
   useEffect(() => {
@@ -45,8 +47,12 @@ export function ThemeToggle() {
       size="sm"
       onClick={toggleTheme}
       className="relative transition-all duration-200 ease-in-out hover:scale-105 active:scale-95"
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
-      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+      aria-label={
+        theme === 'light' ? t('actions.switchToDark') : t('actions.switchToLight')
+      }
+      title={
+        theme === 'light' ? t('actions.switchToDark') : t('actions.switchToLight')
+      }
     >
       <svg
         className={`h-4 w-4 transition-all duration-300 ease-in-out ${
@@ -69,7 +75,9 @@ export function ThemeToggle() {
       >
         <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
       </svg>
-      <span className="sr-only">切换主题</span>
+      <span className="sr-only">
+        {theme === 'light' ? t('actions.switchToDark') : t('actions.switchToLight')}
+      </span>
     </Button>
   )
 }

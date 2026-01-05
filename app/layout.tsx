@@ -4,6 +4,8 @@ import './globals.css';
 import './editor-theme.css';
 import { useGlobalEventListeners } from '@/hooks/useGlobalEventListeners';
 import { useEffect } from 'react';
+import { I18nProvider } from '@/components/i18n-provider';
+import { AppShell } from '@/components/app-shell';
 
 export default function RootLayout({
   children,
@@ -29,30 +31,9 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f0f0f" media="(prefers-color-scheme: dark)" />
       </head>
       <body className={`antialiased preload`}>
-        {/* Skip to main content link for keyboard navigation */}
-        <a href="#main-content" className="skip-to-content">
-          Skip to main content
-        </a>
-        
-        {/* ARIA live region for status announcements */}
-        <div 
-          id="aria-live-region" 
-          aria-live="polite" 
-          aria-atomic="true"
-          className="sr-only"
-        />
-        
-        {/* ARIA live region for urgent announcements */}
-        <div 
-          id="aria-live-assertive" 
-          aria-live="assertive" 
-          aria-atomic="true"
-          className="sr-only"
-        />
-        
-        <main id="main-content">
-          {children}
-        </main>
+        <I18nProvider>
+          <AppShell>{children}</AppShell>
+        </I18nProvider>
       </body>
     </html>
   );
