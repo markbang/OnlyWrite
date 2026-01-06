@@ -46,7 +46,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="sm"
       onClick={toggleTheme}
-      className="relative transition-all duration-200 ease-in-out hover:scale-105 active:scale-95"
+      className="relative transition-colors duration-100"
       aria-label={
         theme === 'light' ? t('actions.switchToDark') : t('actions.switchToLight')
       }
@@ -55,8 +55,8 @@ export function ThemeToggle() {
       }
     >
       <svg
-        className={`h-4 w-4 transition-all duration-300 ease-in-out ${
-          theme === 'dark' ? 'rotate-90 scale-0' : 'rotate-0 scale-100'
+        className={`h-4 w-4 transition-opacity duration-100 ${
+          theme === 'dark' ? 'opacity-0' : 'opacity-100'
         }`}
         fill="none"
         stroke="currentColor"
@@ -66,8 +66,8 @@ export function ThemeToggle() {
         <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
       </svg>
       <svg
-        className={`absolute h-4 w-4 transition-all duration-300 ease-in-out ${
-          theme === 'dark' ? 'rotate-0 scale-100' : '-rotate-90 scale-0'
+        className={`absolute h-4 w-4 transition-opacity duration-100 ${
+          theme === 'dark' ? 'opacity-100' : 'opacity-0'
         }`}
         fill="none"
         stroke="currentColor"

@@ -100,7 +100,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         plugins={[
           toolbarPlugin({
             toolbarContents: () => (
-              <div className="flex flex-wrap items-center gap-1 border-b border-border bg-background/90 px-3 py-2 backdrop-blur sticky top-0 z-10">
+              <div className="flex flex-wrap items-center gap-1 border-b border-foreground bg-background px-3 py-2 sticky top-0 z-10">
                 <UndoRedo />
                 <Separator orientation="vertical" className="mx-2 h-6" />
                 <BlockTypeSelect />
