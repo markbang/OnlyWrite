@@ -40,7 +40,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   folderPath,
   ...props
 }) => {
-  const { hasConfig, uploadImage, reloadConfig } = useS3Config()
+  const { hasConfig, uploadImage } = useS3Config()
   const [uploading, setUploading] = useState(false)
 
   const imageUploadHandler = async (image: File) => {
