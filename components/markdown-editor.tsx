@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {
   MDXEditor,
   type MDXEditorMethods,
@@ -27,6 +27,8 @@ import '@mdxeditor/editor/style.css'
 import { join } from '@tauri-apps/api/path'
 import { writeFile } from '@tauri-apps/plugin-fs'
 import { Separator } from './ui/separator'
+import { useS3Config } from '@/hooks/useS3Config'
+import { toast } from 'sonner'
 
 interface MarkdownEditorProps extends MDXEditorProps {
   editorRef?: React.ForwardedRef<MDXEditorMethods>
@@ -38,20 +40,58 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   folderPath,
   ...props
 }) => {
+  const { hasConfig, uploadImage, reloadConfig } = useS3Config()
+  const [uploading, setUploading] = useState(false)
+
   const imageUploadHandler = async (image: File) => {
-    if (!folderPath) {
+    setUploading(true)
+    try {
+      if (hasConfig()) {
+        const imageName = `${Date.now()}-${image.name}`
+        const fileData = await image.arrayBuffer()
+        const url = await uploadImage(imageName, fileData)
+        toast.success('Image uploaded to S3 successfully')
+        return url
+      } else if (folderPath) {
+        const imageName = `${Date.now()}-${image.name}`
+        const imagePath = await join(folderPath, 'assets', imageName)
+
+        const reader = new FileReader()
+        reader.readAsArrayBuffer(image)
+        await new Promise((resolve, reject) => {
+          reader.onload = async () => {
+            try {
+              await writeFile(imagePath, new Uint8Array(reader.result as ArrayBuffer))
+              resolve(undefined)
+            } catch (e) {
+              reject(e)
+            }
+          }
+          reader.onerror = reject
+        })
+
+        return imagePath
+      } else {
+        toast.error('No S3 configuration or folder path available')
+        return ''
+      }
+    } catch (error) {
+      toast.error(`Failed to upload image: ${error}`)
       return ''
+    } finally {
+      setUploading(false)
     }
-    const imageName = `${Date.now()}-${image.name}`
-    const imagePath = await join(folderPath, 'assets', imageName)
+  }
 
-    const reader = new FileReader()
-    reader.readAsArrayBuffer(image)
-    reader.onload = async () => {
-      await writeFile(imagePath, new Uint8Array(reader.result as ArrayBuffer))
-    }
-
-    return imagePath
+  if (uploading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Uploading image...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
