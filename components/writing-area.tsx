@@ -10,10 +10,12 @@ import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 import { Badge } from './ui/badge'
 import { ScrollArea } from './ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Columns2, Eye, RefreshCw, Save } from 'lucide-react'
+import { Columns2, Eye, RefreshCw, Save, Settings } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useI18n } from '@/hooks/useI18n'
+import { S3ConfigDialog } from './s3-config-dialog'
+import { useS3Config } from '@/hooks/useS3Config'
 
 const MarkdownEditor = dynamic(() => import('./markdown-editor'), { ssr: false })
 
@@ -24,6 +26,7 @@ interface WritingAreaProps {
 
 export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
   const { t } = useI18n()
+  const { reloadConfig } = useS3Config()
   const [markdown, setMarkdown] = useState('')
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null)
   const [isModified, setIsModified] = useState(false)
@@ -178,48 +181,61 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            size="sm"
-            value={viewMode}
-            onValueChange={(value) => {
-              if (value) setViewMode(value as typeof viewMode)
-            }}
-            className="bg-background/50 border-border/80"
-          >
-            <ToggleGroupItem value="edit" aria-label={t('actions.edit')} className="hover:bg-accent">
-              {t('actions.edit')}
-            </ToggleGroupItem>
-            <ToggleGroupItem value="render" aria-label={t('actions.render')} className="hover:bg-accent">
-              <Eye className="size-3" />
-              <span className="hidden sm:inline">{t('actions.render')}</span>
-            </ToggleGroupItem>
-            <ToggleGroupItem value="split" aria-label={t('actions.split')} className="hover:bg-accent">
-              <Columns2 className="size-3" />
-              <span className="hidden sm:inline">{t('actions.split')}</span>
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <Button
-            onClick={handleRestore}
-            disabled={!currentFilePath}
-            size="sm"
-            variant="outline"
-            className="bg-background/50 hover:bg-accent border-border/80 shadow-sm hover:shadow-md transition-all duration-200"
-          >
-            <RefreshCw className="mr-1.5 size-4" />
-            <span className="hidden sm:inline">{t('actions.restore')}</span>
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            size="sm"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
-          >
-            <Save className="mr-1.5 size-4" />
-            {isSaving ? t('actions.saving') : t('actions.save')}
-          </Button>
-        </div>
+           <ToggleGroup
+             type="single"
+             variant="outline"
+             size="sm"
+             value={viewMode}
+             onValueChange={(value) => {
+               if (value) setViewMode(value as typeof viewMode)
+             }}
+             className="bg-background/50 border-border/80"
+           >
+             <ToggleGroupItem value="edit" aria-label={t('actions.edit')} className="hover:bg-accent">
+               {t('actions.edit')}
+             </ToggleGroupItem>
+             <ToggleGroupItem value="render" aria-label={t('actions.render')} className="hover:bg-accent">
+               <Eye className="size-3" />
+               <span className="hidden sm:inline">{t('actions.render')}</span>
+             </ToggleGroupItem>
+             <ToggleGroupItem value="split" aria-label={t('actions.split')} className="hover:bg-accent">
+               <Columns2 className="size-3" />
+               <span className="hidden sm:inline">{t('actions.split')}</span>
+             </ToggleGroupItem>
+           </ToggleGroup>
+           <Button
+             onClick={handleRestore}
+             disabled={!currentFilePath}
+             size="sm"
+             variant="outline"
+             className="bg-background/50 hover:bg-accent border-border/80 shadow-sm hover:shadow-md transition-all duration-200"
+           >
+             <RefreshCw className="mr-1.5 size-4" />
+             <span className="hidden sm:inline">{t('actions.restore')}</span>
+           </Button>
+           <Button
+             onClick={handleSave}
+             disabled={isSaving}
+             size="sm"
+             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
+           >
+             <Save className="mr-1.5 size-4" />
+             {isSaving ? t('actions.saving') : t('actions.save')}
+           </Button>
+           <S3ConfigDialog
+             trigger={
+               <Button
+                 size="sm"
+                 variant="outline"
+                 className="bg-background/50 hover:bg-accent border-border/80 shadow-sm hover:shadow-md transition-all duration-200"
+               >
+                 <Settings className="mr-1.5 size-4" />
+                 <span className="hidden sm:inline">S3 Settings</span>
+               </Button>
+             }
+             onConfigSaved={reloadConfig}
+           />
+         </div>
       </div>
       </CardHeader>
 

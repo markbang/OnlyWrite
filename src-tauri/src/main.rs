@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod events;
+mod s3;
 
 #[tauri::command]
 fn scoop_update() -> Result<String, String> {
@@ -33,7 +34,11 @@ fn main() {
             scoop_update,
             events::a_simple_function,
             events::a_function_with_payload,
-            events::a_function_with_a_result
+            events::a_function_with_a_result,
+            s3::save_s3_config,
+            s3::load_s3_config,
+            s3::delete_s3_config,
+            s3::upload_image_to_s3,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
