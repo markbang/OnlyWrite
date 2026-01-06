@@ -4,10 +4,8 @@ import { useI18n } from '@/hooks/useI18n';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { FileText, FolderOpen, Clock, Zap, TrendingUp, ArrowRight, Plus, Star } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
