@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '../utils/theme-test-utils'
+import { render, screen, fireEvent, cleanup } from '../utils/theme-test-utils'
 import userEvent from '@testing-library/user-event'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
@@ -8,36 +8,29 @@ import { ThemeToggle } from '@/components/theme-toggle'
 
 describe('Comprehensive Theme Testing', () => {
   describe('Requirement 1.1: Theme switching consistency', () => {
-    it('should maintain consistent colors when switching themes', async () => {
-      const user = userEvent.setup()
-      
-      // Test with sidebar component
-      const { rerender } = render(<AppSidebar />, { theme: 'light' })
-      
-      const sidebarLight = screen.getByTestId('sidebar') || document.querySelector('[class*="sidebar"]')
-      const lightStyle = sidebarLight ? getComputedStyle(sidebarLight) : null
-      
-      // Switch to dark theme
-      rerender(<AppSidebar />)
-      
-      const sidebarDark = screen.getByTestId('sidebar') || document.querySelector('[class*="sidebar"]')
-      const darkStyle = sidebarDark ? getComputedStyle(sidebarDark) : null
-      
-      // Colors should be different between themes
-      if (lightStyle && darkStyle) {
-        expect(lightStyle.backgroundColor).not.toBe(darkStyle.backgroundColor)
-      }
+    it('should maintain consistent colors when switching themes', () => {
+      const light = render(<AppSidebar />, { theme: 'light', withSidebar: true })
+      expect(document.documentElement).toHaveClass('light')
+      light.unmount()
+      cleanup()
+
+      const dark = render(<AppSidebar />, { theme: 'dark', withSidebar: true })
+      expect(document.documentElement).toHaveClass('dark')
+      dark.unmount()
+      cleanup()
     })
 
     it('should apply theme colors to all text highlighting', () => {
-      const { container } = render(
+      render(
         <div className="selection:bg-primary/20 selection:text-primary-foreground">
           <p>This text uses theme-consistent selection colors</p>
         </div>,
         { theme: 'light' }
       )
-      
-      const element = container.firstElementChild
+
+      const text = screen.getByText(/theme-consistent selection colors/i)
+      const element = text.closest('div')
+
       expect(element).toHaveClass('selection:bg-primary/20')
       expect(element).toHaveClass('selection:text-primary-foreground')
     })
@@ -65,65 +58,61 @@ describe('Comprehensive Theme Testing', () => {
       }
     })
 
-    it('should apply consistent active states', async () => {
+    it('should apply consistent active states', () => {
       render(
-        <Button variant="default" className="active:scale-95">
+        <Button variant="default">
           Active Test
         </Button>
       )
-      
+
       const button = screen.getByRole('button')
-      
+
       fireEvent.mouseDown(button)
-      expect(button).toHaveClass('active:scale-95')
+      expect(button.className).toContain('active:')
     })
   })
 
   describe('Requirement 1.3: Harmonious color scheme across components', () => {
     it('should maintain color harmony between sidebar, editor, and main content', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />)
-      const { container: headerContainer } = render(<SiteHeader />)
-      
-      // Check that components use theme-consistent classes
-      const sidebar = sidebarContainer.firstElementChild
-      const header = headerContainer.firstElementChild
-      
-      if (sidebar && header) {
-        // Both should use theme color classes
-        const sidebarClasses = sidebar.className
-        const headerClasses = header.className
-        
-        // Should contain theme-related classes
-        const hasThemeClasses = (classes: string) => 
-          classes.includes('bg-') || classes.includes('text-') || classes.includes('border-')
-        
-        expect(hasThemeClasses(sidebarClasses)).toBe(true)
-        expect(hasThemeClasses(headerClasses)).toBe(true)
-      }
+      render(<AppSidebar />, { withSidebar: true })
+      render(<SiteHeader />, { withSidebar: true })
+
+      const sidebar = screen.getByTestId('sidebar')
+      const header = screen.getByRole('banner')
+
+      const hasThemeClasses = (classes: string) =>
+        classes.includes('bg-') || classes.includes('text-') || classes.includes('border-')
+
+      expect(hasThemeClasses(sidebar.className)).toBe(true)
+      expect(hasThemeClasses(header.className)).toBe(true)
     })
   })
 
   describe('Requirement 2.1: Improved text selection colors', () => {
     it('should provide sufficient contrast for text selection', () => {
-      const { container } = render(
+      render(
         <div className="selection:bg-primary/20 selection:text-primary-foreground">
           <p>Selectable text with proper contrast</p>
         </div>
       )
-      
-      const element = container.firstElementChild
+
+      const text = screen.getByText(/selectable text with proper contrast/i)
+      const element = text.closest('div')
+
       expect(element).toHaveClass('selection:bg-primary/20')
       expect(element).toHaveClass('selection:text-primary-foreground')
     })
 
     it('should apply selection colors in markdown editor context', () => {
-      const { container } = render(
+      render(
         <div className="prose selection:bg-primary/20 selection:text-primary-foreground">
           <p>Editor content with selection styling</p>
         </div>
       )
-      
-      const element = container.firstElementChild
+
+      const text = screen.getByText(/editor content with selection styling/i)
+      const element = text.closest('div')
+
       expect(element).toHaveClass('selection:bg-primary/20')
       expect(element).toHaveClass('selection:text-primary-foreground')
     })

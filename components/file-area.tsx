@@ -6,6 +6,8 @@ import { join } from '@tauri-apps/api/path';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
+import { Badge } from './ui/badge';
+import { FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/hooks/useI18n';
 
@@ -133,14 +135,14 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
   return (
     <Card
       className={cn(
-        'h-full overflow-hidden bg-background/80 backdrop-blur py-0 gap-0',
+        'h-full overflow-hidden bg-white/90 dark:bg-card/90 backdrop-blur-sm shadow-md border border-border/50 py-0 gap-0',
         className
       )}
     >
-      <CardHeader className="border-b border-border pb-4">
+      <CardHeader className="border-b border-border/50 bg-muted/30 pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
               {t('file.folderLabel')}
             </p>
             <CardTitle className="truncate text-sm font-semibold">
@@ -149,16 +151,16 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
           </div>
           <div className="flex items-center gap-2">
             {folderPath && (
-              <span className="text-xs text-muted-foreground">
+              <Badge variant="outline" className="text-xs">
                 {t('file.filesCount', { count: fileCount })}
-              </span>
+              </Badge>
             )}
             {folderPath && (
               <Button
                 onClick={handleCreateFile}
                 size="sm"
                 variant="outline"
-                className="h-8 px-3 text-xs"
+                className="h-8 px-3 text-xs bg-background/50 hover:bg-accent border-border/80 shadow-sm hover:shadow-md transition-all duration-200"
               >
                 {t('file.newFile')}
               </Button>
@@ -169,9 +171,9 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
 
       <CardContent className="p-0">
         <ScrollArea className="h-full">
-          <div className="p-3">
+          <div className="p-2.5">
             {folderPath ? (
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 {files.map((entry, index) => {
                   const isActive = selectedFile === entry.name && entry.isFile
                   return (
@@ -179,26 +181,35 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
                       key={index}
                       variant={isActive ? 'secondary' : 'ghost'}
                       className={cn(
-                        'file-list-item h-auto w-full justify-start gap-2 px-2 py-2 text-left text-sm',
-                        !entry.isFile && 'opacity-60'
+                        'h-auto w-full justify-start gap-2.5 px-3 py-2.5 text-left text-sm bg-transparent hover:bg-accent/50 active:bg-accent/70 rounded-lg transition-all duration-200',
+                        !entry.isFile && 'opacity-50 cursor-not-allowed',
+                        isActive && 'bg-secondary shadow-sm'
                       )}
                       disabled={!entry.isFile}
                       onClick={() => handleFileClick(entry.name, entry.isFile)}
                     >
                       {getFileIcon(entry.name, entry.isFile)}
-                      <span className="truncate">{entry.name}</span>
+                      <span className="truncate font-medium">{entry.name}</span>
                     </Button>
                   )
                 })}
                 {files.length === 0 && (
-                  <div className="py-10 text-center text-sm text-muted-foreground">
-                    {t('file.emptyFolder')}
+                  <div className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <FolderOpen className="size-8 text-muted-foreground/50" />
+                      <p className="text-sm text-muted-foreground">
+                        {t('file.emptyFolder')}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-                {t('file.chooseFolder')}
+              <div className="flex flex-col items-center justify-center py-12">
+                <FolderOpen className="size-8 text-muted-foreground/50 mb-2" />
+                <p className="text-sm text-muted-foreground text-center">
+                  {t('file.chooseFolder')}
+                </p>
               </div>
             )}
           </div>

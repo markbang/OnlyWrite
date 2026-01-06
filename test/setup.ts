@@ -1,9 +1,16 @@
-import '@testing-library/jest-dom'
+import "@testing-library/jest-dom/vitest"
 import { beforeAll, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
 // Mock next-themes
 beforeAll(() => {
+  if (!globalThis.ResizeObserver) {
+    globalThis.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  }
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation(query => ({

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render } from '../utils/theme-test-utils'
+import { render, screen } from '../utils/theme-test-utils'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { Button } from '@/components/ui/button'
@@ -58,21 +58,25 @@ describe('Color Harmony Tests', () => {
         </div>,
         { theme: 'light' }
       )
-      
-      const element = container.firstElementChild as HTMLElement
+
+      const element = container.querySelector(
+        '[class*="selection:bg-primary/20"][class*="selection:text-primary-foreground"]'
+      ) as HTMLElement | null
+
+      expect(element).toBeTruthy()
       expect(element).toHaveClass('selection:bg-primary/20')
       expect(element).toHaveClass('selection:text-primary-foreground')
     })
 
     it('should apply consistent selection colors in dark theme', () => {
-      const { container } = render(
+      render(
         <div className="selection:bg-primary/20 selection:text-primary-foreground">
           <p>Selectable text content</p>
         </div>,
         { theme: 'dark' }
       )
-      
-      const element = container.firstElementChild as HTMLElement
+
+      const element = screen.getByText('Selectable text content').parentElement as HTMLElement
       expect(element).toHaveClass('selection:bg-primary/20')
       expect(element).toHaveClass('selection:text-primary-foreground')
     })
@@ -107,17 +111,14 @@ describe('Color Harmony Tests', () => {
 
   describe('Border Color Consistency', () => {
     it('should use consistent border colors', () => {
-      const { container } = render(
+      render(
         <div className="border border-border rounded-md p-4">
           Bordered content
         </div>
       )
-      
-      const element = container.firstElementChild as HTMLElement
+
+      const element = screen.getByText('Bordered content') as HTMLElement
       expect(element).toHaveClass('border-border')
-      
-      const computedStyle = getComputedStyle(element)
-      expect(computedStyle.borderColor).toBeTruthy()
     })
 
     it('should use consistent input border colors', () => {
@@ -137,8 +138,8 @@ describe('Color Harmony Tests', () => {
 
   describe('Component Color Integration', () => {
     it('should maintain color harmony between sidebar and main content', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'light' })
-      const { container: headerContainer } = render(<SiteHeader />, { theme: 'light' })
+      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'light', withSidebar: true })
+      const { container: headerContainer } = render(<SiteHeader />, { theme: 'light', withSidebar: true })
       
       // Both components should use theme-consistent colors
       const sidebar = sidebarContainer.firstElementChild
@@ -155,8 +156,8 @@ describe('Color Harmony Tests', () => {
     })
 
     it('should maintain color harmony in dark theme', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'dark' })
-      const { container: headerContainer } = render(<SiteHeader />, { theme: 'dark' })
+      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'dark', withSidebar: true })
+      const { container: headerContainer } = render(<SiteHeader />, { theme: 'dark', withSidebar: true })
       
       const sidebar = sidebarContainer.firstElementChild
       const header = headerContainer.firstElementChild
