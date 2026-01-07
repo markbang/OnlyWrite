@@ -161,8 +161,8 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
     : t('editor.untitled')
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden bg-white/90 dark:bg-card/90 backdrop-blur-sm shadow-md border border-border/50 py-0 gap-0 hover:shadow-lg transition-shadow duration-300">
-      <CardHeader className="gap-3 border-b border-border/50 bg-muted/30 pb-4">
+    <Card className="flex h-full flex-col overflow-hidden bg-card border border-foreground py-0 gap-0">
+      <CardHeader className="gap-3 border-b border-foreground bg-background pb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -189,16 +189,16 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
              onValueChange={(value) => {
                if (value) setViewMode(value as typeof viewMode)
              }}
-             className="bg-background/50 border-border/80"
+             className="border-foreground"
            >
-             <ToggleGroupItem value="edit" aria-label={t('actions.edit')} className="hover:bg-accent">
+             <ToggleGroupItem value="edit" aria-label={t('actions.edit')} className="hover:bg-foreground hover:text-background">
                {t('actions.edit')}
              </ToggleGroupItem>
-             <ToggleGroupItem value="render" aria-label={t('actions.render')} className="hover:bg-accent">
+             <ToggleGroupItem value="render" aria-label={t('actions.render')} className="hover:bg-foreground hover:text-background">
                <Eye className="size-3" />
                <span className="hidden sm:inline">{t('actions.render')}</span>
              </ToggleGroupItem>
-             <ToggleGroupItem value="split" aria-label={t('actions.split')} className="hover:bg-accent">
+             <ToggleGroupItem value="split" aria-label={t('actions.split')} className="hover:bg-foreground hover:text-background">
                <Columns2 className="size-3" />
                <span className="hidden sm:inline">{t('actions.split')}</span>
              </ToggleGroupItem>
@@ -208,7 +208,6 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
              disabled={!currentFilePath}
              size="sm"
              variant="outline"
-             className="bg-background/50 hover:bg-accent border-border/80 shadow-sm hover:shadow-md transition-all duration-200"
            >
              <RefreshCw className="mr-1.5 size-4" />
              <span className="hidden sm:inline">{t('actions.restore')}</span>
@@ -217,7 +216,6 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
              onClick={handleSave}
              disabled={isSaving}
              size="sm"
-             className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200"
            >
              <Save className="mr-1.5 size-4" />
              {isSaving ? t('actions.saving') : t('actions.save')}
@@ -227,7 +225,6 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
                <Button
                  size="sm"
                  variant="outline"
-                 className="bg-background/50 hover:bg-accent border-border/80 shadow-sm hover:shadow-md transition-all duration-200"
                >
                  <Settings className="mr-1.5 size-4" />
                  <span className="hidden sm:inline">S3 Settings</span>
@@ -255,7 +252,7 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
             </div>
           )}
           {showPreview && (
-            <ScrollArea className="h-full w-full border-t border-border/50 lg:border-t-0 lg:border-l bg-muted/20">
+          <ScrollArea className="h-full w-full border-t border-foreground lg:border-t-0 lg:border-l bg-background">
               <div className="markdown-preview p-6 prose prose-sm sm:prose-base max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {previewSource}

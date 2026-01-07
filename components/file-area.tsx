@@ -100,7 +100,7 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
   const getFileIcon = (fileName: string, isFile: boolean) => {
     if (!isFile) {
       return (
-        <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-4 h-4 text-foreground" fill="currentColor" viewBox="0 0 20 20">
           <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
         </svg>
       );
@@ -108,14 +108,14 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
     
     if (fileName.endsWith('.md')) {
       return (
-        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       );
     }
     
     return (
-      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     );
@@ -135,11 +135,11 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
   return (
     <Card
       className={cn(
-        'h-full overflow-hidden bg-white/90 dark:bg-card/90 backdrop-blur-sm shadow-md border border-border/50 py-0 gap-0',
+        'h-full overflow-hidden bg-card border border-foreground py-0 gap-0',
         className
       )}
     >
-      <CardHeader className="border-b border-border/50 bg-muted/30 pb-4">
+      <CardHeader className="border-b border-foreground bg-background pb-4">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
@@ -160,7 +160,7 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
                 onClick={handleCreateFile}
                 size="sm"
                 variant="outline"
-                className="h-8 px-3 text-xs bg-background/50 hover:bg-accent border-border/80 shadow-sm hover:shadow-md transition-all duration-200"
+                className="h-8 px-3 text-xs"
               >
                 {t('file.newFile')}
               </Button>
@@ -181,9 +181,9 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
                       key={index}
                       variant={isActive ? 'secondary' : 'ghost'}
                       className={cn(
-                        'h-auto w-full justify-start gap-2.5 px-3 py-2.5 text-left text-sm bg-transparent hover:bg-accent/50 active:bg-accent/70 rounded-lg transition-all duration-200',
+                        'h-auto w-full justify-start gap-2.5 px-3 py-2.5 text-left text-sm bg-transparent border-transparent hover:bg-foreground hover:text-background transition-colors duration-100',
                         !entry.isFile && 'opacity-50 cursor-not-allowed',
-                        isActive && 'bg-secondary shadow-sm'
+                        isActive && 'bg-foreground text-background border-foreground'
                       )}
                       disabled={!entry.isFile}
                       onClick={() => handleFileClick(entry.name, entry.isFile)}
@@ -196,7 +196,7 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
                 {files.length === 0 && (
                   <div className="py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <FolderOpen className="size-8 text-muted-foreground/50" />
+                      <FolderOpen className="size-8 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         {t('file.emptyFolder')}
                       </p>
@@ -206,7 +206,7 @@ export function FileArea({ folderPath, onFileSelect, className }: FileAreaProps)
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12">
-                <FolderOpen className="size-8 text-muted-foreground/50 mb-2" />
+                <FolderOpen className="size-8 text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground text-center">
                   {t('file.chooseFolder')}
                 </p>

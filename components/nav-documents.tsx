@@ -42,7 +42,7 @@ export function NavDocuments({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild className="hover:shadow-soft active:shadow-subtle">
+            <SidebarMenuButton asChild>
               <a href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
@@ -52,14 +52,14 @@ export function NavDocuments({
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction
                   showOnHover
-                  className="data-[state=open]:bg-accent rounded-sm shadow-subtle hover:shadow-soft"
+                  className="data-[state=open]:bg-foreground data-[state=open]:text-background"
                 >
                   <IconDots />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-24 rounded-lg shadow-medium border-border"
+                className="w-24 border border-foreground"
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
@@ -81,7 +81,7 @@ export function NavDocuments({
           </SidebarMenuItem>
         ))}
         <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70 hover:shadow-soft active:shadow-subtle">
+          <SidebarMenuButton className="text-sidebar-foreground/70">
             <IconDots className="text-sidebar-foreground/70" />
             <span>More</span>
           </SidebarMenuButton>
