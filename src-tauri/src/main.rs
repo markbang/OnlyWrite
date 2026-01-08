@@ -39,6 +39,14 @@ fn main() {
             s3::load_s3_config,
             s3::delete_s3_config,
             s3::upload_image_to_s3,
+            workspace_commands::get_current_folder_path,
+            workspace_commands::set_current_folder_path,
+            workspace_commands::get_current_file_path,
+            workspace_commands::set_current_file_path,
+            workspace_commands::get_recent_files,
+            persistence::get_settings,
+            persistence::save_settings,
+            workspace_commands::add_recent_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
