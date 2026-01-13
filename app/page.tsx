@@ -3,80 +3,56 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { checkForAppUpdates } from '@/lib/updater';
-
-import { open } from '@tauri-apps/plugin-dialog';
 import { useTauriAppVersion } from '@/hooks/useTauriApp';
+
 import { FileArea } from '@/components/file-area';
 import { WritingArea } from '@/components/writing-area';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LanguageToggle } from '@/components/language-toggle';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
-import { FolderOpen, PanelLeft, Sparkles } from 'lucide-react';
+import { FolderOpen, Sparkles } from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/useI18n';
+import { useWorkspaceStore, useSettingsStore } from '@/lib/stores';
+import { selectFolderName, selectActiveFileName } from '@/lib/stores/workspace-store';
 
 export default function Home() {
   const { t } = useI18n();
   const appVersion = useTauriAppVersion();
 
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-  const [folderPath, setFolderPath] = useState<string | null>(null);
-  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
-  const [isFileSheetOpen, setIsFileSheetOpen] = useState(false);
 
-  // 使用 useEffect 在组件挂载时检查更新
-  useEffect(() => {
-    checkForAppUpdates(false);
-  }, []);
+  const workspaceState = useWorkspaceStore()
+  const { folderPath } = workspaceState
+  const { autosaveEnabled } = useSettingsStore()
 
-  const openFolder = async () => {
+  const handleFolderSelect = async () => {
+    const { open } = await import('@tauri-apps/plugin-dialog');
     const result = await open({
       directory: true,
       multiple: false,
     });
 
     if (typeof result === 'string') {
+      const { setFolderPath } = useWorkspaceStore.getState();
       setFolderPath(result);
-      setSelectedFilePath(null);
     }
   };
 
-  const handleFileSelect = (filePath: string) => {
-    setSelectedFilePath(filePath);
-    setIsFileSheetOpen(false);
-  };
-
-  const folderName = useMemo(() => {
-    if (!folderPath) return null;
-    const parts = folderPath.split(/[\\/]/);
-    return parts[parts.length - 1] || folderPath;
-  }, [folderPath]);
-
-  const fileName = useMemo(() => {
-    if (!selectedFilePath) return null;
-    const parts = selectedFilePath.split(/[\\/]/);
-    return parts[parts.length - 1] || selectedFilePath;
-  }, [selectedFilePath]);
+  const folderName = selectFolderName(workspaceState)
+  const fileName = selectActiveFileName(workspaceState)
 
   return (
     <div className='flex min-h-svh flex-col bg-background'>
@@ -94,12 +70,15 @@ export default function Home() {
                 height={32}
                 priority
               />
-               <div className="min-w-0">
+              <div className="min-w-0">
                 <h1 className='text-lg font-display font-bold text-foreground tracking-tight'>OnlyWrite</h1>
                 <p className='text-xs text-muted-foreground font-medium'>
                   {t('app.subtitle')}
                 </p>
               </div>
+            </div>
+
+            <div className='flex items-center gap-2 sm:gap-3'>
               {folderName && (
                 <Badge variant="secondary" className="hidden md:inline-flex">
                   <FolderOpen className="mr-1 size-3" />
@@ -113,57 +92,38 @@ export default function Home() {
               )}
             </div>
 
-            <div className='flex items-center gap-2 sm:gap-3'>
-            {folderPath && (
-              <Sheet open={isFileSheetOpen} onOpenChange={setIsFileSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant='outline' size='sm' className="md:hidden">
-                    <PanelLeft className="mr-1 size-4" />
-                    {t('actions.openFiles')}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0">
-                  <SheetHeader className="border-b border-foreground bg-background">
-                    <SheetTitle className="px-4 py-3">{t('actions.openFiles')}</SheetTitle>
-                  </SheetHeader>
-                  <FileArea
-                    folderPath={folderPath}
-                    onFileSelect={handleFileSelect}
-                    className="border-r-0 shadow-none"
-                  />
-                </SheetContent>
-              </Sheet>
-            )}
+            <div className='flex items-center gap-1 sm:gap-2'>
+              {folderPath && (
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleFolderSelect}
+                >
+                  <FolderOpen className="mr-1.5 size-4" />
+                  <span className="hidden sm:inline">
+                    {t('actions.switchFolder')}
+                  </span>
+                </Button>
+              )}
 
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={openFolder}
-            >
-              <FolderOpen className="mr-1.5 size-4" />
-              <span className="hidden sm:inline">
-                {folderPath ? t('actions.switchFolder') : t('actions.selectFolder')}
-              </span>
-            </Button>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <LanguageToggle />
+                <ThemeToggle />
+              </div>
 
-            <div className="flex items-center gap-1 sm:gap-2">
-              <LanguageToggle />
-              <ThemeToggle />
-            </div>
-
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => {
-                setIsCheckingUpdate(true);
-                checkForAppUpdates(true).finally(() => {
-                  setIsCheckingUpdate(false);
-                });
-              }}
-              disabled={isCheckingUpdate}
-            >
-              {isCheckingUpdate ? t('actions.checking') : t('actions.checkUpdates')}
-            </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => {
+                  setIsCheckingUpdate(true);
+                  checkForAppUpdates(true).finally(() => {
+                    setIsCheckingUpdate(false);
+                  });
+                }}
+                disabled={isCheckingUpdate}
+              >
+                {isCheckingUpdate ? t('actions.checking') : t('actions.checkUpdates')}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -192,13 +152,13 @@ export default function Home() {
                       <Sparkles className="size-5 text-foreground" strokeWidth={1.5} />
                       {t('app.welcomeTitle')}
                     </CardTitle>
-                    <CardDescription className="text-sm font-medium font-body">{t('app.welcomeLead')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <Button onClick={openFolder} className="w-full">
+                    <Button onClick={handleFolderSelect} className="w-full">
                       <FolderOpen className="mr-2 size-5" strokeWidth={1.5} />
                       {t('actions.selectFolder')}
                     </Button>
+
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span className="inline-flex h-1.5 w-1.5 bg-foreground"></span>
@@ -216,11 +176,13 @@ export default function Home() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border border-foreground p-6 flex-1">
+                <Card className="bg-card border border-foreground p-8">
                   <CardHeader>
-                    <CardTitle className="text-lg font-display tracking-tight">{t('app.efficiencyTitle')}</CardTitle>
+                    <CardTitle className="text-2xl font-display tracking-tight">
+                      {t('app.efficiencyTitle')}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-5 text-sm font-body">
+                  <CardContent className="space-y-6 text-sm font-body">
                     <div className="flex gap-3">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground text-foreground">
                         <FolderOpen className="size-4" strokeWidth={1.5} />
@@ -258,27 +220,18 @@ export default function Home() {
             <div className="mx-auto w-full max-w-7xl hidden md:flex">
               <ResizablePanelGroup direction="horizontal" className="flex-1 gap-2">
                 <ResizablePanel defaultSize={22} minSize={18} maxSize={35} className="min-w-0">
-                  <FileArea
-                    folderPath={folderPath}
-                    onFileSelect={handleFileSelect}
-                  />
+                  <FileArea />
                 </ResizablePanel>
                 <ResizableHandle withHandle className="bg-foreground/40 hover:bg-foreground transition-colors duration-100" />
                 <ResizablePanel defaultSize={78} className="min-w-0">
                   <div className="h-full p-2">
-                    <WritingArea
-                      folderPath={folderPath}
-                      filePath={selectedFilePath}
-                    />
+                    <WritingArea />
                   </div>
                 </ResizablePanel>
               </ResizablePanelGroup>
             </div>
             <div className="flex flex-1 p-2 md:hidden">
-              <WritingArea
-                folderPath={folderPath}
-                filePath={selectedFilePath}
-              />
+              <WritingArea />
             </div>
           </div>
         )}
@@ -291,7 +244,7 @@ export default function Home() {
             <Separator orientation="vertical" className="hidden h-3.5 sm:block" />
             <span className="hidden sm:inline flex items-center gap-1.5">
               <span className="inline-flex h-1.5 w-1.5 bg-foreground"></span>
-              {t('editor.autosave')}
+              {autosaveEnabled ? t('editor.autosave') : t('editor.autosaveOff')}
             </span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">

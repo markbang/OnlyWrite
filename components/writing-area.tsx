@@ -1,10 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { MDXEditorMethods } from '@mdxeditor/editor'
 import { Button } from './ui/button'
-import { save } from '@tauri-apps/plugin-dialog'
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group'
 import { Badge } from './ui/badge'
@@ -14,81 +13,103 @@ import { Columns2, Eye, RefreshCw, Save, Settings } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useI18n } from '@/hooks/useI18n'
-import { S3ConfigDialog } from './s3-config-dialog'
 import { useS3Config } from '@/hooks/useS3Config'
+import { useWorkspaceStore, useEditorStore, useSettingsStore } from '@/lib/stores'
+import { selectShowEditor, selectShowPreview } from '@/lib/stores/editor-store'
+import { selectActiveFileName } from '@/lib/stores/workspace-store'
+import { toast } from 'sonner'
+import { useHotkeys } from 'react-hotkeys-hook'
+import { S3ConfigDialog } from './s3-config-dialog'
 
 const MarkdownEditor = dynamic(() => import('./markdown-editor'), { ssr: false })
 
-interface WritingAreaProps {
-  folderPath: string | null
-  filePath: string | null
-}
-
-export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
+export function WritingArea() {
   const { t } = useI18n()
   const { reloadConfig } = useS3Config()
-  const [markdown, setMarkdown] = useState('')
-  const [currentFilePath, setCurrentFilePath] = useState<string | null>(null)
-  const [isModified, setIsModified] = useState(false)
-  const [lastSavedMarkdown, setLastSavedMarkdown] = useState('')
-  const [wordCount, setWordCount] = useState(0)
-  const [isSaving, setIsSaving] = useState(false)
-  const [viewMode, setViewMode] = useState<'edit' | 'render' | 'split'>('edit')
-  const editorRef = React.useRef<MDXEditorMethods>(null)
 
-  // 计算字数
+  const editorRef = useRef<MDXEditorMethods>(null)
+
+  const {
+    markdown,
+    isModified,
+    isSaving,
+    viewMode,
+    wordCount,
+    isLoadingContent,
+    error,
+    setMarkdown,
+    setIsModified,
+    setIsSaving,
+    setViewMode,
+    setWordCount,
+    setIsLoadingContent,
+    setError,
+    markAsSaved,
+  } = useEditorStore()
+
+  const { folderPath, selectedFilePath } = useWorkspaceStore()
+  const { shortcuts } = useSettingsStore()
+
+  const editorState = useEditorStore.getState()
+  const showEditor = selectShowEditor(editorState)
+  const showPreview = selectShowPreview(editorState)
+  const workspaceState = useWorkspaceStore.getState()
+  const fileName = selectActiveFileName(workspaceState)
+
   const calculateWordCount = useCallback((text: string) => {
-    const words = text.trim().split(/\s+/).filter(word => word.length > 0)
+    const words = text.trim().split(/\s+/).filter((word: string) => word.length > 0)
     return words.length
   }, [])
 
-  useEffect(() => {
-    if (filePath) {
-      setCurrentFilePath(filePath)
-      readTextFile(filePath)
-        .then((content) => {
-          setMarkdown(content)
-          setLastSavedMarkdown(content)
-          setWordCount(calculateWordCount(content))
-          setIsModified(false)
-          editorRef.current?.setMarkdown(content)
-        })
-        .catch(console.error)
+  const loadFileContent = useCallback(async () => {
+    if (!selectedFilePath) {
+      setMarkdown('')
+      setError(null)
+      setIsModified(false)
+      return
     }
-  }, [filePath, calculateWordCount])
 
-  // 自动保存功能
-  useEffect(() => {
-    if (!isModified || !currentFilePath) return;
+    setIsLoadingContent(true)
+    setError(null)
 
-    const autoSaveTimer = setTimeout(async () => {
-      try {
-        const currentContent = editorRef.current?.getMarkdown() || markdown;
-        await writeTextFile(currentFilePath, currentContent);
-        setLastSavedMarkdown(currentContent);
-        setIsModified(false);
-        console.log('自动保存:', currentFilePath);
-      } catch (error) {
-        console.error('自动保存失败:', error);
-      }
-    }, 5000); // 5秒后自动保存
-
-    return () => {
-      clearTimeout(autoSaveTimer);
-    };
-  }, [isModified, currentFilePath, markdown]);
-
-  // 快捷键支持
-  const handleSave = useCallback(async () => {
-    if (isSaving) return;
-    
-    setIsSaving(true);
     try {
-      // 从编辑器获取最新内容
-      const currentContent = editorRef.current?.getMarkdown() || markdown;
-      let savePath = currentFilePath;
+      const content = await readTextFile(selectedFilePath)
+      setMarkdown(content)
+      markAsSaved()
+      setWordCount(calculateWordCount(content))
+      editorRef.current?.setMarkdown(content)
+    } catch (error) {
+      console.error('Failed to load file:', error)
+      const errorMessage = t('editor.loadFailed') || 'Failed to load file'
+      setError(errorMessage)
+      toast.error(errorMessage)
+     } finally {
+       setIsLoadingContent(false)
+     }
+   }, [selectedFilePath, setMarkdown, setIsModified, markAsSaved, setWordCount, setIsLoadingContent, setError, calculateWordCount, t])
+ 
+   useEffect(() => {
+     loadFileContent()
+   }, [loadFileContent])
+
+  const handleContentChange = useCallback((content: string) => {
+    setMarkdown(content)
+    setIsModified(content !== useEditorStore.getState().lastSavedMarkdown)
+    setWordCount(calculateWordCount(content))
+  }, [setMarkdown, setIsModified, setWordCount, calculateWordCount])
+
+  const handleSave = useCallback(async () => {
+    if (isSaving) return
+
+    setIsSaving(true)
+    setError(null)
+
+    try {
+      const currentContent = editorRef.current?.getMarkdown() || markdown
+      let savePath = selectedFilePath
 
       if (!savePath) {
+        const { save } = await import('@tauri-apps/plugin-dialog')
         savePath = await save({
           filters: [
             {
@@ -96,171 +117,211 @@ export function WritingArea({ folderPath, filePath }: WritingAreaProps) {
               extensions: ['md'],
             },
           ],
-        });
+        })
+
+        if (savePath) {
+          const { setSelectedFile } = useWorkspaceStore.getState()
+          setSelectedFile(savePath)
+        }
       }
 
       if (savePath) {
-        await writeTextFile(savePath, currentContent);
-        setCurrentFilePath(savePath);
-        setMarkdown(currentContent);
-        setLastSavedMarkdown(currentContent);
-        setIsModified(false);
-        setWordCount(calculateWordCount(currentContent));
-        console.log('文件已保存:', savePath);
+        await writeTextFile(savePath, currentContent)
+        setMarkdown(currentContent)
+        markAsSaved()
+        setWordCount(calculateWordCount(currentContent))
+        toast.success(t('editor.saved') || 'File saved')
       }
     } catch (error) {
-      console.error(t('editor.saveFailed'), error);
-      alert(t('editor.saveFailed') + error);
+      console.error('Failed to save file:', error)
+      const errorMessage = t('editor.saveFailed') || 'Failed to save file'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  }, [isSaving, markdown, currentFilePath, calculateWordCount, t]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === 's') {
-        event.preventDefault();
-        handleSave();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleSave]);
+  }, [isSaving, markdown, selectedFilePath, setMarkdown, markAsSaved, setWordCount, setIsSaving, setError, calculateWordCount, t])
 
   const handleRestore = useCallback(async () => {
-    if (!currentFilePath) return;
+    if (!selectedFilePath) return
+
+    setIsLoadingContent(true)
+    setError(null)
 
     try {
-      const content = await readTextFile(currentFilePath);
-      setMarkdown(content);
-      setLastSavedMarkdown(content);
-      setIsModified(false);
-      setWordCount(calculateWordCount(content));
-      editorRef.current?.setMarkdown(content);
+      const content = await readTextFile(selectedFilePath)
+      setMarkdown(content)
+      markAsSaved()
+      setWordCount(calculateWordCount(content))
+      editorRef.current?.setMarkdown(content)
+      toast.success(t('editor.restored') || 'File restored')
     } catch (error) {
-      console.error(t('editor.restoreFailed'), error);
-      alert(t('editor.restoreFailed') + error);
+      console.error('Failed to restore file:', error)
+      const errorMessage = t('editor.restoreFailed') || 'Failed to restore file'
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setIsLoadingContent(false)
     }
-  }, [currentFilePath, calculateWordCount, t]);
+  }, [selectedFilePath, setMarkdown, markAsSaved, setWordCount, setIsLoadingContent, setError, calculateWordCount, t])
 
-  const handleContentChange = (content: string) => {
-    setMarkdown(content)
-    setIsModified(content !== lastSavedMarkdown)
-    setWordCount(calculateWordCount(content))
-  }
+  useHotkeys(shortcuts.save, (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault()
+      handleSave()
+    }
+  })
 
-  const showEditor = viewMode !== 'render'
-  const showPreview = viewMode !== 'edit'
-  const previewSource =
-    markdown.trim().length === 0 ? t('editor.previewEmpty') : markdown
-  const fileName = currentFilePath
-    ? currentFilePath.split(/[\\/]/).pop()
-    : t('editor.untitled')
+  const previewSource = markdown.trim().length === 0
+    ? t('editor.previewEmpty') || 'Start writing to see preview...'
+    : markdown
 
   return (
     <Card className="flex h-full flex-col overflow-hidden bg-card border border-foreground py-0 gap-0">
       <CardHeader className="gap-3 border-b border-foreground bg-background pb-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <CardTitle className="truncate text-base sm:text-lg font-semibold">
-              {fileName}
-            </CardTitle>
-            {isModified ? (
-              <Badge variant="secondary" className="text-xs">{t('editor.unsaved')}</Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs">{t('editor.saved')}</Badge>
-            )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <CardTitle className="truncate text-base sm:text-lg font-semibold">
+                {fileName || (t('editor.untitled') || 'Untitled')}
+              </CardTitle>
+              {isLoadingContent ? (
+                <Badge variant="outline" className="text-xs animate-pulse">
+                  {t('editor.loading') || 'Loading...'}
+                </Badge>
+              ) : isModified ? (
+                <Badge variant="secondary" className="text-xs">
+                  {t('editor.unsaved') || 'Unsaved'}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs">
+                  {t('editor.saved') || 'Saved'}
+                </Badge>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {t('editor.wordCount', { count: wordCount })} ·{' '}
+              {selectedFilePath
+                ? selectedFilePath
+                : t('editor.notSavedToDisk') || 'Not saved to disk'}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {t('editor.wordCount', { count: wordCount })} ·{' '}
-            {currentFilePath ? currentFilePath : t('editor.notSavedToDisk')}
+          <div className="flex flex-wrap items-center gap-2">
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              value={viewMode}
+              onValueChange={(value) => {
+                if (value) setViewMode(value as 'edit' | 'render' | 'split')
+              }}
+              className="border-foreground"
+            >
+              <ToggleGroupItem
+                value="edit"
+                aria-label={t('actions.edit') || 'Edit'}
+                className="hover:bg-foreground hover:text-background"
+              >
+                {t('actions.edit') || 'Edit'}
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="render"
+                aria-label={t('actions.render') || 'Render'}
+                className="hover:bg-foreground hover:text-background"
+              >
+                <Eye className="size-3" />
+                <span className="hidden sm:inline">
+                  {t('actions.render') || 'Render'}
+                </span>
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="split"
+                aria-label={t('actions.split') || 'Split'}
+                className="hover:bg-foreground hover:text-background"
+              >
+                <Columns2 className="size-3" />
+                <span className="hidden sm:inline">
+                  {t('actions.split') || 'Split'}
+                </span>
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <Button
+              onClick={handleRestore}
+              disabled={!selectedFilePath || isLoadingContent}
+              size="sm"
+              variant="outline"
+            >
+              <RefreshCw className="mr-1.5 size-4" />
+              <span className="hidden sm:inline">
+                {t('actions.restore') || 'Restore'}
+              </span>
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving || isLoadingContent}
+              size="sm"
+            >
+              <Save className="mr-1.5 size-4" />
+              {isSaving
+                ? (t('actions.saving') || 'Saving...')
+                : (t('actions.save') || 'Save')
+              }
+            </Button>
+            <S3ConfigDialog
+              trigger={
+                <Button
+                  size="sm"
+                  variant="outline"
+                >
+                  <Settings className="mr-1.5 size-4" />
+                  <span className="hidden sm:inline">S3 Settings</span>
+                </Button>
+              }
+              onConfigSaved={reloadConfig}
+            />
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-           <ToggleGroup
-             type="single"
-             variant="outline"
-             size="sm"
-             value={viewMode}
-             onValueChange={(value) => {
-               if (value) setViewMode(value as typeof viewMode)
-             }}
-             className="border-foreground"
-           >
-             <ToggleGroupItem value="edit" aria-label={t('actions.edit')} className="hover:bg-foreground hover:text-background">
-               {t('actions.edit')}
-             </ToggleGroupItem>
-             <ToggleGroupItem value="render" aria-label={t('actions.render')} className="hover:bg-foreground hover:text-background">
-               <Eye className="size-3" />
-               <span className="hidden sm:inline">{t('actions.render')}</span>
-             </ToggleGroupItem>
-             <ToggleGroupItem value="split" aria-label={t('actions.split')} className="hover:bg-foreground hover:text-background">
-               <Columns2 className="size-3" />
-               <span className="hidden sm:inline">{t('actions.split')}</span>
-             </ToggleGroupItem>
-           </ToggleGroup>
-           <Button
-             onClick={handleRestore}
-             disabled={!currentFilePath}
-             size="sm"
-             variant="outline"
-           >
-             <RefreshCw className="mr-1.5 size-4" />
-             <span className="hidden sm:inline">{t('actions.restore')}</span>
-           </Button>
-           <Button
-             onClick={handleSave}
-             disabled={isSaving}
-             size="sm"
-           >
-             <Save className="mr-1.5 size-4" />
-             {isSaving ? t('actions.saving') : t('actions.save')}
-           </Button>
-           <S3ConfigDialog
-             trigger={
-               <Button
-                 size="sm"
-                 variant="outline"
-               >
-                 <Settings className="mr-1.5 size-4" />
-                 <span className="hidden sm:inline">S3 Settings</span>
-               </Button>
-             }
-             onConfigSaved={reloadConfig}
-           />
-         </div>
-      </div>
+        {error && (
+          <div className="mt-3 px-4 py-2 bg-destructive/10 text-destructive text-sm border border-destructive rounded">
+            {error}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="flex-1 min-h-0 bg-background p-0">
-        <div
-          className={`h-full ${showEditor && showPreview ? 'grid grid-cols-1 lg:grid-cols-2' : 'flex'}`}
-        >
-          {showEditor && (
-            <div className="h-full min-h-0">
-              <MarkdownEditor
-                editorRef={editorRef}
-                markdown={markdown}
-                onChange={handleContentChange}
-                placeholder={t('editor.placeholder')}
-                folderPath={folderPath}
-              />
-            </div>
-          )}
-          {showPreview && (
-          <ScrollArea className="h-full w-full border-t border-foreground lg:border-t-0 lg:border-l bg-background">
-              <div className="markdown-preview p-6 prose prose-sm sm:prose-base max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {previewSource}
-                </ReactMarkdown>
+        {isLoadingContent ? (
+          <div className="flex h-full items-center justify-center gap-3">
+            <RefreshCw className="size-8 text-muted-foreground animate-spin" />
+            <p className="text-sm text-muted-foreground">
+              {t('editor.loadingFile') || 'Loading file...'}
+            </p>
+          </div>
+        ) : (
+          <div
+            className={`h-full ${showEditor && showPreview ? 'grid grid-cols-1 lg:grid-cols-2' : 'flex'}`}
+          >
+            {showEditor && (
+              <div className="h-full min-h-0">
+                <MarkdownEditor
+                  editorRef={editorRef}
+                  markdown={markdown}
+                  onChange={handleContentChange}
+                  placeholder={t('editor.placeholder') || 'Start writing...'}
+                  folderPath={folderPath}
+                />
               </div>
-            </ScrollArea>
-          )}
-        </div>
+            )}
+            {showPreview && (
+              <ScrollArea className="h-full w-full border-t border-foreground lg:border-t-0 lg:border-l bg-background">
+                <div className="markdown-preview p-6 prose prose-sm sm:prose-base max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {previewSource}
+                  </ReactMarkdown>
+                </div>
+              </ScrollArea>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
