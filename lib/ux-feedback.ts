@@ -85,7 +85,6 @@ export class UXFeedback {
   }): Promise<boolean> {
     try {
       const confirmed = await confirm(options.title, {
-        type: 'warning',
         okLabel: options?.okLabel || 'OK',
         cancelLabel: options?.cancelLabel || 'Cancel',
       })
@@ -103,7 +102,6 @@ export class UXFeedback {
   }): Promise<void> {
     try {
       await message(options.title, {
-        type: 'info',
         okLabel: 'OK',
       })
     } catch (error) {
@@ -116,9 +114,5 @@ export class UXFeedback {
 
     const message = error instanceof Error ? error.message : 'An error occurred'
     this.error(message)
-  }
-
-  static error(msg: string) {
-    toast.error(msg)
   }
 }
