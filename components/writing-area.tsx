@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { MDXEditorMethods } from '@mdxeditor/editor'
 import { Button } from './ui/button'
@@ -15,7 +15,7 @@ import remarkGfm from 'remark-gfm'
 import { useI18n } from '@/hooks/useI18n'
 import { useS3Config } from '@/hooks/useS3Config'
 import { useWorkspaceStore, useEditorStore, useSettingsStore } from '@/lib/stores'
-import { selectShowEditor, selectShowPreview, selectShowSplitView } from '@/lib/stores/editor-store'
+import { selectShowEditor, selectShowPreview } from '@/lib/stores/editor-store'
 import { selectActiveFileName } from '@/lib/stores/workspace-store'
 import { toast } from 'sonner'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -53,7 +53,6 @@ export function WritingArea() {
   const editorState = useEditorStore.getState()
   const showEditor = selectShowEditor(editorState)
   const showPreview = selectShowPreview(editorState)
-  const showSplitView = selectShowSplitView(editorState)
   const workspaceState = useWorkspaceStore.getState()
   const fileName = selectActiveFileName(workspaceState)
 
@@ -84,14 +83,14 @@ export function WritingArea() {
       const errorMessage = t('editor.loadFailed') || 'Failed to load file'
       setError(errorMessage)
       toast.error(errorMessage)
-    } finally {
-      setIsLoadingContent(false)
-    }
-  }, [selectedFilePath, setMarkdown, markAsSaved, setWordCount, setIsLoadingContent, setError, calculateWordCount, t])
-
-  useEffect(() => {
-    loadFileContent()
-  }, [loadFileContent])
+     } finally {
+       setIsLoadingContent(false)
+     }
+   }, [selectedFilePath, setMarkdown, setIsModified, markAsSaved, setWordCount, setIsLoadingContent, setError, calculateWordCount, t])
+ 
+   useEffect(() => {
+     loadFileContent()
+   }, [loadFileContent])
 
   const handleContentChange = useCallback((content: string) => {
     setMarkdown(content)
@@ -121,7 +120,7 @@ export function WritingArea() {
         })
 
         if (savePath) {
-          const { setSelectedFile } = useWorkspaceStore()
+          const { setSelectedFile } = useWorkspaceStore.getState()
           setSelectedFile(savePath)
         }
       }

@@ -25,8 +25,8 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/useI18n';
-import { useWorkspaceStore, useUIStore, useSettingsStore } from '@/lib/stores';
-import { selectFolderName, selectActiveFileName, selectFileCount } from '@/lib/stores/workspace-store';
+import { useWorkspaceStore, useSettingsStore } from '@/lib/stores';
+import { selectFolderName, selectActiveFileName } from '@/lib/stores/workspace-store';
 
 export default function Home() {
   const { t } = useI18n();
@@ -35,8 +35,7 @@ export default function Home() {
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   const workspaceState = useWorkspaceStore()
-  const { folderPath, selectedFilePath, files } = workspaceState
-  const { setFileSheetOpen } = useUIStore()
+  const { folderPath } = workspaceState
   const { autosaveEnabled } = useSettingsStore()
 
   const handleFolderSelect = async () => {
@@ -54,7 +53,6 @@ export default function Home() {
 
   const folderName = selectFolderName(workspaceState)
   const fileName = selectActiveFileName(workspaceState)
-  const fileCount = selectFileCount(workspaceState)
 
   return (
     <div className='flex min-h-svh flex-col bg-background'>

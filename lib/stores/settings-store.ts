@@ -85,7 +85,7 @@ export const useSettingsStore = create<SettingsState>()(
       })),
     setRememberWindowSize: (remember) => set({ rememberWindowSize: remember }),
     setShowMinimap: (show) => set({ showMinimap: show }),
-    resetSettings: () => set(defaultSettingsData as any),
+    resetSettings: () => set({ ...defaultSettingsData }),
 
     loadSettings: async () => {
       try {

@@ -25,7 +25,6 @@ export function FileArea({ className }: { className?: string }) {
 
   const {
     folderPath,
-    selectedFilePath,
     files,
     isLoadingFiles,
     fileError,
@@ -59,7 +58,7 @@ export function FileArea({ className }: { className?: string }) {
     } catch (error) {
       UXFeedback.handleError(error, 'Failed to load files')
     }
-  }, [folderPath, setFiles, setIsLoadingFiles, setFileError, t])
+  }, [folderPath, setFiles, setIsLoadingFiles, setFileError])
 
   useEffect(() => {
     loadFiles()
@@ -122,8 +121,6 @@ export function FileArea({ className }: { className?: string }) {
 
     return <FileIcon className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
   }
-
-  const isActive = activeFileName !== null
 
   return (
     <Card
