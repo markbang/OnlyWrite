@@ -88,6 +88,8 @@ export const useSettingsStore = create<SettingsState>()(
     resetSettings: () => set({ ...defaultSettingsData }),
 
     loadSettings: async () => {
+      if (typeof window === 'undefined') return
+
       try {
         const stored = await invoke<Partial<SettingsData> | null>('get_settings')
 
@@ -142,4 +144,6 @@ export const persistSettings = () => {
   }, 500)
 }
 
-useSettingsStore.getState().loadSettings()
+if (typeof window !== 'undefined') {
+  useSettingsStore.getState().loadSettings()
+}
