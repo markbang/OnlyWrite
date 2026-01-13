@@ -1,4 +1,3 @@
-import { Store } from '@tauri-apps/plugin-store'
 import { invoke } from '@tauri-apps/api/core'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
@@ -133,7 +132,7 @@ export const useSettingsStore = create<SettingsState>()(
       }
     },
   }))
-}
+);
 
 let saveTimeout: NodeJS.Timeout | null = null
 export const persistSettings = () => {
