@@ -1,7 +1,5 @@
 import { render, RenderOptions } from "@testing-library/react"
 import type { ReactElement, ReactNode } from "react"
-import { ThemeProvider } from "next-themes"
-
 import { I18nProvider } from "../../components/i18n-provider"
 import { SidebarProvider } from "../../components/ui/sidebar"
 
@@ -24,16 +22,7 @@ const ThemeWrapper = ({ children, theme, withSidebar }: ThemeWrapperProps) => {
 
   const content = withSidebar ? <SidebarProvider>{children}</SidebarProvider> : children
 
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme={theme}
-      enableSystem={false}
-      disableTransitionOnChange
-    >
-      <I18nProvider>{content}</I18nProvider>
-    </ThemeProvider>
-  )
+  return <I18nProvider>{content}</I18nProvider>
 }
 
 const customRender = (

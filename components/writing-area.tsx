@@ -1,7 +1,6 @@
 'use client'
 
-import React, { useEffect, useCallback, useRef } from 'react'
-import dynamic from 'next/dynamic'
+import React, { useEffect, useCallback, useRef, Suspense } from 'react'
 import { MDXEditorMethods } from '@mdxeditor/editor'
 import { Button } from './ui/button'
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs'
@@ -21,7 +20,7 @@ import { toast } from 'sonner'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { S3ConfigDialog } from './s3-config-dialog'
 
-const MarkdownEditor = dynamic(() => import('./markdown-editor'), { ssr: false })
+const MarkdownEditor = React.lazy(() => import('./markdown-editor'))
 
 export function WritingArea() {
   const { t } = useI18n()
@@ -302,13 +301,15 @@ export function WritingArea() {
           >
             {showEditor && (
               <div className="h-full min-h-0">
-                <MarkdownEditor
-                  editorRef={editorRef}
-                  markdown={markdown}
-                  onChange={handleContentChange}
-                  placeholder={t('editor.placeholder') || 'Start writing...'}
-                  folderPath={folderPath}
-                />
+                <Suspense fallback={null}>
+                  <MarkdownEditor
+                    editorRef={editorRef}
+                    markdown={markdown}
+                    onChange={handleContentChange}
+                    placeholder={t('editor.placeholder') || 'Start writing...'}
+                    folderPath={folderPath}
+                  />
+                </Suspense>
               </div>
             )}
             {showPreview && (

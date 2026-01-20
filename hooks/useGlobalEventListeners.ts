@@ -26,11 +26,10 @@ export function useGlobalEventListeners() {
 
     // --- Conditionally add keydown listener (only NOT in development) ---
     let isKeyDownListenerAdded = false;
-    if (process.env.NODE_ENV !== 'development') {
-      window.addEventListener('keydown', handleKeyDown);
-      isKeyDownListenerAdded = true;
-    } else {
-      console.log('Running in development mode, F12 blocking is disabled.');
+    const isDev = import.meta.env.DEV
+    if (!isDev) {
+      window.addEventListener('keydown', handleKeyDown)
+      isKeyDownListenerAdded = true
     }
 
     // --- Cleanup function ---

@@ -1,19 +1,21 @@
-'use client';
-
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useI18n } from '@/hooks/useI18n';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, FolderOpen, Clock, Zap, TrendingUp, ArrowRight, Plus, Star } from 'lucide-react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+
+export const Route = createFileRoute('/dashboard')({
+  component: DashboardPage,
+})
+
 
 export default function DashboardPage() {
   const { t } = useI18n();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleGoToHome = () => {
-    router.push('/');
+    navigate({ to: '/' });
   };
 
   const stats = [
@@ -90,7 +92,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="flex items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <Image
+            <img
               src="/app-icon.svg"
               alt="OnlyWrite app icon"
               width={40}

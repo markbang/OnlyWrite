@@ -1,8 +1,6 @@
-'use client';
-
+import { createFileRoute } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
 import { useState } from 'react';
 import { checkForAppUpdates } from '@/lib/updater';
 import { useTauriAppVersion } from '@/hooks/useTauriApp';
@@ -27,6 +25,10 @@ import { Separator } from '@/components/ui/separator';
 import { useI18n } from '@/hooks/useI18n';
 import { useWorkspaceStore, useSettingsStore } from '@/lib/stores';
 import { selectFolderName, selectActiveFileName } from '@/lib/stores/workspace-store';
+
+export const Route = createFileRoute('/')({
+  component: Home,
+})
 
 export default function Home() {
   const { t } = useI18n();
@@ -63,12 +65,11 @@ export default function Home() {
         >
           <CardContent className="flex items-center justify-between gap-3 px-4 py-3">
             <div className='flex min-w-0 items-center spacing-md'>
-              <Image
-                src='/app-icon.svg'
-                alt='OnlyWrite app icon'
+              <img
+                src="/app-icon.svg"
+                alt="OnlyWrite app icon"
                 width={32}
                 height={32}
-                priority
               />
               <div className="min-w-0">
                 <h1 className='text-lg font-display font-bold text-foreground tracking-tight'>OnlyWrite</h1>
