@@ -1,9 +1,11 @@
-'use client'
-
+import { createFileRoute } from '@tanstack/react-router'
 import { LoginForm } from "@/components/login-form"
-import Image from "next/image"
 import { useI18n } from "@/hooks/useI18n"
 import { LanguageToggle } from "@/components/language-toggle"
+
+export const Route = createFileRoute('/login')({
+  component: LoginPage,
+})
 
 export default function LoginPage() {
   const { t } = useI18n()
@@ -13,7 +15,7 @@ export default function LoginPage() {
       <div className="flex w-full max-w-md flex-col gap-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Image
+            <img
               src="/app-icon.svg"
               alt="OnlyWrite app icon"
               width={32}
