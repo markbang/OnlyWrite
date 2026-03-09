@@ -7,7 +7,7 @@ import { applyTheme, settingsActions } from '@/state/settings'
 import { workspaceActions } from '@/state/workspace'
 
 beforeAll(() => {
-  ;(globalThis as { __APP_VERSION__?: string }).__APP_VERSION__ = '0.1.6'
+  ;(globalThis as { __APP_VERSION__?: string }).__APP_VERSION__ = '0.2.0'
 
   if (!globalThis.ResizeObserver) {
     globalThis.ResizeObserver = class ResizeObserver {
