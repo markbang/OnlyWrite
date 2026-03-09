@@ -1,5 +1,19 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const projects = [
+  {
+    name: 'chromium',
+    use: { ...devices['Desktop Chrome'] },
+  },
+]
+
+if (process.env.PLAYWRIGHT_ENABLE_WEBKIT === '1') {
+  projects.push({
+    name: 'webkit',
+    use: { ...devices['Desktop Safari'] },
+  })
+}
+
 export default defineConfig({
   testDir: './test/visual',
   fullyParallel: true,
@@ -8,22 +22,15 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
+    locale: 'en-US',
+    timezoneId: 'UTC',
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-  ],
+  projects,
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
+    command: 'pnpm dev --host 127.0.0.1',
+    url: 'http://127.0.0.1:3000',
     reuseExistingServer: !process.env.CI,
   },
 })

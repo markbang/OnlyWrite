@@ -1,105 +1,32 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '../utils/theme-test-utils'
-import { AppSidebar } from '@/components/app-sidebar'
-import { SiteHeader } from '@/components/site-header'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { describe, expect, it } from 'vitest'
+import { screen } from '@solidjs/testing-library'
+import HomePage from '@/routes/index'
+import LoginPage from '@/routes/login'
+import { render } from '../utils/theme-test-utils'
 
-describe('Theme Consistency Tests', () => {
-  describe('Light Theme Consistency', () => {
-    it('should apply consistent background colors across components', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'light', withSidebar: true })
-      const { container: headerContainer } = render(<SiteHeader />, { theme: 'light', withSidebar: true })
-      
-      const sidebar = sidebarContainer.querySelector('[data-testid="sidebar"]') || sidebarContainer.firstElementChild
-      const header = headerContainer.querySelector('header') || headerContainer.firstElementChild
-      
-      if (sidebar && header) {
-        const sidebarBg = getComputedStyle(sidebar).backgroundColor
-        const headerBg = getComputedStyle(header).backgroundColor
-        
-        // Both should use theme background colors
-        expect(sidebarBg).toBeTruthy()
-        expect(headerBg).toBeTruthy()
-      }
-    })
+describe('theme consistency across routes', () => {
+  it('renders the home landing state in light theme', () => {
+    render(() => <HomePage />, { theme: 'light' })
 
-    it('should apply consistent text colors across components', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'light', withSidebar: true })
-      const { container: headerContainer } = render(<SiteHeader />, { theme: 'light', withSidebar: true })
-      
-      const sidebarText = sidebarContainer.querySelector('[class*="text-"]')
-      const headerText = headerContainer.querySelector('[class*="text-"]')
-      
-      if (sidebarText && headerText) {
-        const sidebarColor = getComputedStyle(sidebarText).color
-        const headerColor = getComputedStyle(headerText).color
-        
-        // Should use consistent foreground colors
-        expect(sidebarColor).toBeTruthy()
-        expect(headerColor).toBeTruthy()
-      }
-    })
-
-    it('should apply consistent border colors across components', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'light', withSidebar: true })
-      
-      const borderedElements = sidebarContainer.querySelectorAll('[class*="border"]')
-      
-      borderedElements.forEach((element) => {
-        expect(element.className).toContain('border')
-      })
-    })
+    expect(document.documentElement).toHaveClass('light')
+    expect(screen.getByRole('heading', { name: 'OnlyWrite' })).toBeInTheDocument()
+    expect(screen.getByText('WRITE')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Select folder' })).toBeInTheDocument()
   })
 
-  describe('Dark Theme Consistency', () => {
-    it('should apply consistent background colors in dark theme', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'dark', withSidebar: true })
-      const { container: headerContainer } = render(<SiteHeader />, { theme: 'dark', withSidebar: true })
-      
-      const sidebar = sidebarContainer.querySelector('[data-testid="sidebar"]') || sidebarContainer.firstElementChild
-      const header = headerContainer.querySelector('header') || headerContainer.firstElementChild
-      
-      if (sidebar && header) {
-        const sidebarBg = getComputedStyle(sidebar).backgroundColor
-        const headerBg = getComputedStyle(header).backgroundColor
-        
-        // Both should use dark theme background colors
-        expect(sidebarBg).toBeTruthy()
-        expect(headerBg).toBeTruthy()
-      }
-    })
+  it('renders the same landing state in dark theme', () => {
+    render(() => <HomePage />, { theme: 'dark' })
 
-    it('should apply consistent text colors in dark theme', () => {
-      const { container: sidebarContainer } = render(<AppSidebar />, { theme: 'dark', withSidebar: true })
-      const { container: headerContainer } = render(<SiteHeader />, { theme: 'dark', withSidebar: true })
-      
-      const sidebarText = sidebarContainer.querySelector('[class*="text-"]')
-      const headerText = headerContainer.querySelector('[class*="text-"]')
-      
-      if (sidebarText && headerText) {
-        const sidebarColor = getComputedStyle(sidebarText).color
-        const headerColor = getComputedStyle(headerText).color
-        
-        // Should use consistent dark theme foreground colors
-        expect(sidebarColor).toBeTruthy()
-        expect(headerColor).toBeTruthy()
-      }
-    })
+    expect(document.documentElement).toHaveClass('dark')
+    expect(screen.getByText('WRITE')).toBeInTheDocument()
+    expect(screen.getByText('Efficiency-first design')).toBeInTheDocument()
   })
 
-  describe('Theme Toggle Functionality', () => {
-    it('should render theme toggle component', () => {
-      render(<ThemeToggle />)
-      
-      const toggleButton = screen.getByRole('button')
-      expect(toggleButton).toBeInTheDocument()
-    })
+  it('renders the login page with the shared shell styles', () => {
+    render(() => <LoginPage />, { theme: 'dark' })
 
-    it('should have accessible theme toggle', () => {
-      render(<ThemeToggle />)
-      
-      const toggleButton = screen.getByRole('button')
-      expect(toggleButton).toHaveAttribute('aria-label')
-    })
+    expect(screen.getByRole('heading', { name: 'Sign in to OnlyWrite' })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('m@example.com')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()
   })
 })

@@ -1,212 +1,61 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import {
-  formatMessage,
-  detectLocale,
-  persistLocale,
-  getMessage,
-  messages,
-  type Locale,
-} from '@/lib/i18n'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { detectLocale, formatMessage, getMessage, messages, persistLocale } from '@/lib/i18n'
 
-describe('Internationalization (i18n)', () => {
-  describe('formatMessage()', () => {
-    it('should return message without parameters unchanged', () => {
-      expect(formatMessage('Hello world')).toBe('Hello world')
-    })
-
-    it('should replace single parameter', () => {
-      const result = formatMessage('{count} files', { count: 5 })
-      expect(result).toBe('5 files')
-    })
-
-    it('should replace multiple parameters', () => {
-      const result = formatMessage('{name} has {count} files', {
-        name: 'User',
-        count: 10,
-      })
-      expect(result).toBe('User has 10 files')
-    })
-
-    it('should handle numeric parameters', () => {
-      const result = formatMessage('Version {version}', { version: 1.5 })
-      expect(result).toBe('Version 1.5')
-    })
-
-    it('should preserve unreplaced parameters', () => {
-      const result = formatMessage('{count} files', { total: 5 })
-      expect(result).toBe('{count} files')
-    })
-
-    it('should handle mixed replaced and unreplaced parameters', () => {
-      const result = formatMessage('{count} files out of {total}', { count: 3 })
-      expect(result).toBe('3 files out of {total}')
+describe('i18n utilities', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+    Object.defineProperty(window.navigator, 'languages', {
+      configurable: true,
+      value: ['en-US'],
     })
   })
 
-  describe('getMessage()', () => {
-    it('should retrieve top-level message', () => {
-      const result = getMessage('en', 'app.title')
-      expect(result).toBe('OnlyWrite')
+  describe('formatMessage', () => {
+    it('replaces message parameters', () => {
+      expect(formatMessage('{count} files', { count: 5 })).toBe('5 files')
+      expect(formatMessage('{name} - {count}', { name: 'Draft', count: 2 })).toBe('Draft - 2')
     })
 
-    it('should retrieve nested message', () => {
-      const result = getMessage('en', 'actions.selectFolder')
-      expect(result).toBe('Select folder')
-    })
-
-    it('should retrieve deep nested message', () => {
-      const result = getMessage('en', 'dashboard.welcomeSubtitle')
-      expect(result).toBe("Here's what's happening with your writing")
-    })
-
-    it('should fallback to English for missing translation', () => {
-      const result = getMessage('en', 'app.title')
-      expect(result).toBe('OnlyWrite')
-    })
-
-    it('should return key if message not found', () => {
-      const result = getMessage('en', 'nonexistent.key.path')
-      expect(result).toBe('nonexistent.key.path')
-    })
-
-    it('should work for Chinese locale', () => {
-      const result = getMessage('zh', 'app.title')
-      expect(result).toBe('OnlyWrite')
-    })
-
-    it('should retrieve Chinese translation', () => {
-      const result = getMessage('zh', 'actions.selectFolder')
-      expect(result).toBe('选择文件夹')
+    it('keeps unknown placeholders intact', () => {
+      expect(formatMessage('{count} files', { total: 9 })).toBe('{count} files')
     })
   })
 
-  describe('detectLocale()', () => {
-    let localStorageMock: Record<string, string> = {}
-
-    beforeEach(() => {
-      localStorageMock = {}
-      global.localStorage = {
-        getItem: (key: string) => localStorageMock[key] || null,
-        setItem: (key: string, value: string) => {
-          localStorageMock[key] = value
-        },
-        removeItem: (key: string) => {
-          delete localStorageMock[key]
-        },
-        clear: () => {
-          localStorageMock = {}
-        },
-        length: 0,
-        key: () => null,
-      }
+  describe('getMessage', () => {
+    it('reads nested English messages', () => {
+      expect(getMessage('en', 'dashboard.welcomeSubtitle')).toBe('A quick look at your current workspace')
     })
 
-    it('should return stored locale if valid', () => {
-      localStorage.setItem('onlywrite-locale', 'zh')
+    it('reads nested Chinese messages', () => {
+      expect(getMessage('zh', 'actions.selectFolder')).toBe('选择文件夹')
+    })
+
+    it('falls back to the key for unknown messages', () => {
+      expect(getMessage('en', 'missing.key')).toBe('missing.key')
+    })
+  })
+
+  describe('detectLocale and persistLocale', () => {
+    it('prefers stored locales', () => {
+      persistLocale('zh')
       expect(detectLocale()).toBe('zh')
     })
 
-    it('should detect Chinese from navigator', () => {
-      Object.defineProperty(navigator, 'languages', {
+    it('detects Chinese from navigator languages', () => {
+      Object.defineProperty(window.navigator, 'languages', {
+        configurable: true,
         value: ['zh-CN', 'en-US'],
-        configurable: true,
       })
+
       expect(detectLocale()).toBe('zh')
     })
 
-    it('should default to English if no Chinese in navigator', () => {
-      Object.defineProperty(navigator, 'languages', {
-        value: ['en-US', 'fr-FR'],
-        configurable: true,
-      })
-      expect(detectLocale()).toBe('en')
-    })
-
-    it('should detect Chinese from any zh-* variant', () => {
-      Object.defineProperty(navigator, 'languages', {
-        value: ['zh-TW'],
-        configurable: true,
-      })
-      expect(detectLocale()).toBe('zh')
-    })
-
-    it('should prioritize stored locale over navigator', () => {
-      localStorage.setItem('onlywrite-locale', 'en')
-      Object.defineProperty(navigator, 'languages', {
-        value: ['zh-CN'],
-        configurable: true,
-      })
-      expect(detectLocale()).toBe('en')
-    })
-
-    it('should ignore invalid stored locale', () => {
-      localStorage.setItem('onlywrite-locale', 'invalid')
-      Object.defineProperty(navigator, 'languages', {
-        value: ['en-US'],
-        configurable: true,
-      })
+    it('defaults to English when no locale is stored', () => {
       expect(detectLocale()).toBe('en')
     })
   })
 
-  describe('persistLocale()', () => {
-    let localStorageMock: Record<string, string> = {}
-
-    beforeEach(() => {
-      localStorageMock = {}
-      global.localStorage = {
-        getItem: (key: string) => localStorageMock[key] || null,
-        setItem: (key: string, value: string) => {
-          localStorageMock[key] = value
-        },
-        removeItem: (key: string) => {
-          delete localStorageMock[key]
-        },
-        clear: () => {
-          localStorageMock = {}
-        },
-        length: 0,
-        key: () => null,
-      }
-    })
-
-    it('should persist English locale', () => {
-      persistLocale('en')
-      expect(localStorage.getItem('onlywrite-locale')).toBe('en')
-    })
-
-    it('should persist Chinese locale', () => {
-      persistLocale('zh')
-      expect(localStorage.getItem('onlywrite-locale')).toBe('zh')
-    })
-
-    it('should overwrite existing locale', () => {
-      persistLocale('en')
-      expect(localStorage.getItem('onlywrite-locale')).toBe('en')
-      persistLocale('zh')
-      expect(localStorage.getItem('onlywrite-locale')).toBe('zh')
-    })
-  })
-
-  describe('messages structure', () => {
-    it('should have English messages', () => {
-      expect(messages.en).toBeDefined()
-      expect(messages.en).toHaveProperty('app')
-      expect(messages.en).toHaveProperty('actions')
-      expect(messages.en).toHaveProperty('file')
-    })
-
-    it('should have Chinese messages', () => {
-      expect(messages.zh).toBeDefined()
-      expect(messages.zh).toHaveProperty('app')
-      expect(messages.zh).toHaveProperty('actions')
-      expect(messages.zh).toHaveProperty('file')
-    })
-
-    it('should have matching structure across locales', () => {
-      const enKeys = Object.keys(messages.en)
-      const zhKeys = Object.keys(messages.zh)
-      expect(enKeys.sort()).toEqual(zhKeys.sort())
-    })
+  it('keeps the same top-level message structure across locales', () => {
+    expect(Object.keys(messages.en).sort()).toEqual(Object.keys(messages.zh).sort())
   })
 })

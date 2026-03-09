@@ -1,69 +1,32 @@
-import { render, RenderOptions } from "@testing-library/react"
-import type { ReactElement, ReactNode } from "react"
-import { I18nProvider } from "../../components/i18n-provider"
-import { SidebarProvider } from "../../components/ui/sidebar"
+import type { Component, JSX } from 'solid-js'
+import { render as solidRender } from '@solidjs/testing-library'
+import { I18nProvider } from '@/components/i18n-provider'
 
+export type Theme = 'light' | 'dark'
 
-type Theme = "light" | "dark"
-
-function applyThemeClass(theme: Theme) {
-  document.documentElement.classList.remove("light", "dark")
+export function applyThemeClass(theme: Theme) {
+  document.documentElement.classList.remove('light', 'dark')
   document.documentElement.classList.add(theme)
 }
 
-type ThemeWrapperProps = {
-  children: ReactNode
-  theme: Theme
-  withSidebar?: boolean
-}
-
-const ThemeWrapper = ({ children, theme, withSidebar }: ThemeWrapperProps) => {
-  applyThemeClass(theme)
-
-  const content = withSidebar ? <SidebarProvider>{children}</SidebarProvider> : children
-
-  return <I18nProvider>{content}</I18nProvider>
-}
-
-const customRender = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, "wrapper"> & {
+export function render(
+  ui: () => JSX.Element,
+  options?: {
     theme?: Theme
-    withSidebar?: boolean
   }
-) => {
-  const { theme = "light", withSidebar = false, ...renderOptions } = options || {}
+) {
+  const theme = options?.theme ?? 'light'
 
-  return render(ui, {
-    wrapper: ({ children }) => (
-      <ThemeWrapper theme={theme} withSidebar={withSidebar}>
-        {children}
-      </ThemeWrapper>
-    ),
-    ...renderOptions,
+  const Wrapper: Component<{ children: JSX.Element }> = (props) => {
+    applyThemeClass(theme)
+    return <I18nProvider>{props.children}</I18nProvider>
+  }
+
+  return solidRender(ui, {
+    wrapper: Wrapper,
   })
 }
 
-export * from "@testing-library/react"
-export { customRender as render }
-
-export const getCSSCustomProperty = (element: Element, property: string): string => {
-  return getComputedStyle(element).getPropertyValue(property).trim()
-}
-
-export const testColorConsistency = (
-  element: Element,
-  expectedLightColor: string,
-  expectedDarkColor: string,
-  property: string
-) => {
-  const lightValue = getCSSCustomProperty(element, property)
-  const darkValue = getCSSCustomProperty(element, property)
-
-  return {
-    light: lightValue === expectedLightColor,
-    dark: darkValue === expectedDarkColor,
-    lightValue,
-    darkValue,
-  }
+export function getCSSCustomProperty(property: string) {
+  return getComputedStyle(document.documentElement).getPropertyValue(property).trim()
 }
