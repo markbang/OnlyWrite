@@ -1,260 +1,257 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
-import { checkForAppUpdates } from '@/lib/updater';
-import { useTauriAppVersion } from '@/hooks/useTauriApp';
-
-import { FileArea } from '@/components/file-area';
-import { WritingArea } from '@/components/writing-area';
-import { ThemeToggle } from '@/components/theme-toggle';
-import { LanguageToggle } from '@/components/language-toggle';
+import { Show, createMemo, createResource, createSignal } from 'solid-js'
+import { FolderOpen, Sparkles } from 'lucide-solid'
+import { FileBrowser } from '@/components/file-browser'
+import { useI18n } from '@/components/i18n-provider'
+import { LanguageToggle } from '@/components/language-toggle'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { WritingArea } from '@/components/writing-area'
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable';
-import { FolderOpen, Sparkles } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { useI18n } from '@/hooks/useI18n';
-import { useWorkspaceStore, useSettingsStore } from '@/lib/stores';
-import { selectFolderName, selectActiveFileName } from '@/lib/stores/workspace-store';
+  checkForAppUpdates,
+  getAppVersion,
+  openDirectoryPicker,
+} from '@/lib/tauri'
+import { getErrorMessage } from '@/lib/utils'
+import { settings } from '@/state/settings'
+import { toast } from '@/state/toast'
+import { selectActiveFileName, selectFolderName, workspace, workspaceActions } from '@/state/workspace'
 
-export const Route = createFileRoute('/')({
-  component: Home,
-})
+export default function HomePage() {
+  const { t } = useI18n()
+  const [isCheckingUpdate, setIsCheckingUpdate] = createSignal(false)
+  const [sidebarWidth, setSidebarWidth] = createSignal(22)
+  let splitContainerRef: HTMLDivElement | undefined
 
-export default function Home() {
-  const { t } = useI18n();
-  const appVersion = useTauriAppVersion();
-
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-
-  const workspaceState = useWorkspaceStore()
-  const { folderPath } = workspaceState
-  const { autosaveEnabled } = useSettingsStore()
+  const [appVersion] = createResource(getAppVersion)
+  const folderName = createMemo(() => selectFolderName())
+  const fileName = createMemo(() => selectActiveFileName())
 
   const handleFolderSelect = async () => {
-    const { open } = await import('@tauri-apps/plugin-dialog');
-    const result = await open({
-      directory: true,
-      multiple: false,
-    });
+    try {
+      const result = await openDirectoryPicker()
+      if (!result) return
 
-    if (typeof result === 'string') {
-      const { setFolderPath } = useWorkspaceStore.getState();
-      setFolderPath(result);
+      workspaceActions.setFolderPath(result)
+      await workspaceActions.loadFiles()
+    } catch (error) {
+      toast.error(getErrorMessage(error))
     }
-  };
+  }
 
-  const folderName = selectFolderName(workspaceState)
-  const fileName = selectActiveFileName(workspaceState)
+  const handleCheckUpdates = async () => {
+    setIsCheckingUpdate(true)
+    try {
+      await checkForAppUpdates(true)
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    } finally {
+      setIsCheckingUpdate(false)
+    }
+  }
+
+  const startResize = (event: PointerEvent) => {
+    const container = splitContainerRef
+    if (!container) return
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      const rect = container.getBoundingClientRect()
+      const percent = ((moveEvent.clientX - rect.left) / rect.width) * 100
+      setSidebarWidth(Math.max(18, Math.min(35, percent)))
+    }
+
+    const stopResize = () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', stopResize)
+    }
+
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', stopResize)
+    event.preventDefault()
+  }
 
   return (
-    <div className='flex min-h-svh flex-col bg-background'>
-      <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-4 sm:px-6">
-        <Card
-          className="mx-auto max-w-7xl bg-background border-b border-foreground border-x-0 border-t-0"
-          data-tauri-drag-region
-        >
-          <CardContent className="flex items-center justify-between gap-3 px-4 py-3">
-            <div className='flex min-w-0 items-center spacing-md'>
-              <img
-                src="/app-icon.svg"
-                alt="OnlyWrite app icon"
-                width={32}
-                height={32}
-              />
-              <div className="min-w-0">
-                <h1 className='text-lg font-display font-bold text-foreground tracking-tight'>OnlyWrite</h1>
-                <p className='text-xs text-muted-foreground font-medium'>
-                  {t('app.subtitle')}
-                </p>
+    <div class="flex min-h-svh flex-col bg-background">
+      <div class="fixed left-0 right-0 top-0 z-50 px-4 pt-4 sm:px-6">
+        <Card class="mx-auto max-w-7xl border-x-0 border-b border-t-0 bg-background">
+          <CardContent class="flex items-center justify-between gap-3 px-4 py-3">
+            <div class="flex min-w-0 items-center spacing-md">
+              <img src="/app-icon.svg" alt="OnlyWrite app icon" width="32" height="32" />
+              <div class="min-w-0">
+                <h1 class="text-lg font-display font-bold tracking-tight text-foreground">OnlyWrite</h1>
+                <p class="text-xs font-medium text-muted-foreground">{t('app.subtitle')}</p>
               </div>
             </div>
 
-            <div className='flex items-center gap-2 sm:gap-3'>
-              {folderName && (
-                <Badge variant="secondary" className="hidden md:inline-flex">
-                  <FolderOpen className="mr-1 size-3" />
-                  {folderName}
+            <div class="hidden min-w-0 items-center gap-2 md:flex">
+              <Show when={folderName()}>
+                <Badge class="max-w-[180px] truncate">
+                  <FolderOpen class="size-3" />
+                  {folderName()}
                 </Badge>
-              )}
-              {fileName && (
-                <Badge variant="outline" className="hidden lg:inline-flex">
-                  {fileName}
-                </Badge>
-              )}
+              </Show>
+              <Show when={fileName()}>
+                <Badge class="max-w-[180px] truncate">{fileName()}</Badge>
+              </Show>
             </div>
 
-            <div className='flex items-center gap-1 sm:gap-2'>
-              {folderPath && (
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={handleFolderSelect}
-                >
-                  <FolderOpen className="mr-1.5 size-4" />
-                  <span className="hidden sm:inline">
-                    {t('actions.switchFolder')}
-                  </span>
+            <div class="flex items-center gap-1 sm:gap-2">
+              <Show when={workspace.folderPath}>
+                <Button variant="outline" size="sm" onClick={() => void handleFolderSelect()}>
+                  <FolderOpen class="size-4" />
+                  <span class="hidden sm:inline">{t('actions.switchFolder')}</span>
                 </Button>
-              )}
+              </Show>
 
-              <div className="flex items-center gap-1 sm:gap-2">
-                <LanguageToggle />
-                <ThemeToggle />
-              </div>
+              <LanguageToggle />
+              <ThemeToggle />
 
               <Button
-                variant='outline'
-                size='sm'
-                onClick={() => {
-                  setIsCheckingUpdate(true);
-                  checkForAppUpdates(true).finally(() => {
-                    setIsCheckingUpdate(false);
-                  });
-                }}
-                disabled={isCheckingUpdate}
+                variant="outline"
+                size="sm"
+                onClick={() => void handleCheckUpdates()}
+                disabled={isCheckingUpdate()}
               >
-                {isCheckingUpdate ? t('actions.checking') : t('actions.checkUpdates')}
+                {isCheckingUpdate() ? t('actions.checking') : t('actions.checkUpdates')}
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className='flex flex-1 pt-24 overflow-hidden'>
-        {!folderPath ? (
-          <div className="flex flex-1 items-center justify-center px-4 sm:px-6">
-            <div className="w-full max-w-5xl gap-8 p-6">
-              <div className="mb-12 flex items-center gap-4">
-                <div className="h-[8px] flex-1 bg-foreground"></div>
-                <div className="border-2 border-foreground p-1">
-                  <div className="w-4 h-4 bg-foreground"></div>
-                </div>
-                <div className="h-[8px] flex-1 bg-foreground"></div>
-              </div>
-
-              <h2 className="text-[8rem] md:text-[10rem] font-display font-bold leading-none tracking-tighter mb-16">
-                WRITE
-              </h2>
-
-              <div className="grid md:grid-cols-[1.2fr_1fr] gap-8">
-                <Card className="bg-card border border-foreground p-8">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-2xl font-display tracking-tight">
-                      <Sparkles className="size-5 text-foreground" strokeWidth={1.5} />
-                      {t('app.welcomeTitle')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <Button onClick={handleFolderSelect} className="w-full">
-                      <FolderOpen className="mr-2 size-5" strokeWidth={1.5} />
-                      {t('actions.selectFolder')}
-                    </Button>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="inline-flex h-1.5 w-1.5 bg-foreground"></span>
-                        {t('status.shortcutSave')}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="inline-flex h-1.5 w-1.5 bg-foreground"></span>
-                        {t('status.viewModes')}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="inline-flex h-1.5 w-1.5 bg-foreground"></span>
-                        {t('status.restoreHint')}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-card border border-foreground p-8">
-                  <CardHeader>
-                    <CardTitle className="text-2xl font-display tracking-tight">
-                      {t('app.efficiencyTitle')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6 text-sm font-body">
-                    <div className="flex gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground text-foreground">
-                        <FolderOpen className="size-4" strokeWidth={1.5} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{t('app.efficiencyScanTitle')}</p>
-                        <p className="text-muted-foreground">{t('app.efficiencyScanBody')}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground text-foreground">
-                        <Sparkles className="size-4" strokeWidth={1.5} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{t('app.efficiencySafeTitle')}</p>
-                        <p className="text-muted-foreground">{t('app.efficiencySafeBody')}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground text-foreground">
-                        <FolderOpen className="size-4" strokeWidth={1.5} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{t('app.efficiencyCrossTitle')}</p>
-                        <p className="text-muted-foreground">{t('app.efficiencyCrossBody')}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 px-4 sm:px-6 pb-6">
-            <div className="mx-auto w-full max-w-7xl hidden md:flex">
-              <ResizablePanelGroup direction="horizontal" className="flex-1 gap-2">
-                <ResizablePanel defaultSize={22} minSize={18} maxSize={35} className="min-w-0">
-                  <FileArea />
-                </ResizablePanel>
-                <ResizableHandle withHandle className="bg-foreground/40 hover:bg-foreground transition-colors duration-100" />
-                <ResizablePanel defaultSize={78} className="min-w-0">
-                  <div className="h-full p-2">
-                    <WritingArea />
+      <div class="flex flex-1 overflow-hidden pb-20 pt-24">
+        <Show
+          when={workspace.folderPath}
+          fallback={
+            <div class="flex flex-1 items-center justify-center px-4 sm:px-6">
+              <div class="w-full max-w-5xl gap-8 p-6">
+                <div class="mb-12 flex items-center gap-4">
+                  <div class="h-[8px] flex-1 bg-foreground" />
+                  <div class="border-2 border-foreground p-1">
+                    <div class="h-4 w-4 bg-foreground" />
                   </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
+                  <div class="h-[8px] flex-1 bg-foreground" />
+                </div>
+
+                <h2 class="mb-16 text-[5rem] font-display font-bold leading-none tracking-tighter md:text-[9rem]">
+                  WRITE
+                </h2>
+
+                <div class="grid gap-8 md:grid-cols-[1.2fr_1fr]">
+                  <Card class="border border-foreground bg-card p-8">
+                    <CardHeader>
+                      <CardTitle class="flex items-center gap-2 text-2xl font-display tracking-tight">
+                        <Sparkles class="size-5 text-foreground" />
+                        {t('app.welcomeTitle')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-6">
+                      <Button onClick={() => void handleFolderSelect()} class="w-full">
+                        <FolderOpen class="size-5" />
+                        {t('actions.selectFolder')}
+                      </Button>
+
+                      <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span class="inline-flex h-1.5 w-1.5 bg-foreground" />
+                          {t('status.shortcutSave')}
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span class="inline-flex h-1.5 w-1.5 bg-foreground" />
+                          {t('status.viewModes')}
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span class="inline-flex h-1.5 w-1.5 bg-foreground" />
+                          {t('status.restoreHint')}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card class="border border-foreground bg-card p-8">
+                    <CardHeader>
+                      <CardTitle class="text-2xl font-display tracking-tight">
+                        {t('app.efficiencyTitle')}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent class="space-y-6 text-sm font-body">
+                      <div class="flex gap-3">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground text-foreground">
+                          <FolderOpen class="size-4" />
+                        </div>
+                        <div>
+                          <p class="font-medium text-foreground">{t('app.efficiencyScanTitle')}</p>
+                          <p class="text-muted-foreground">{t('app.efficiencyScanBody')}</p>
+                        </div>
+                      </div>
+                      <div class="flex gap-3">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground text-foreground">
+                          <Sparkles class="size-4" />
+                        </div>
+                        <div>
+                          <p class="font-medium text-foreground">{t('app.efficiencySafeTitle')}</p>
+                          <p class="text-muted-foreground">{t('app.efficiencySafeBody')}</p>
+                        </div>
+                      </div>
+                      <div class="flex gap-3">
+                        <div class="flex h-8 w-8 shrink-0 items-center justify-center border border-foreground text-foreground">
+                          <FolderOpen class="size-4" />
+                        </div>
+                        <div>
+                          <p class="font-medium text-foreground">{t('app.efficiencyCrossTitle')}</p>
+                          <p class="text-muted-foreground">{t('app.efficiencyCrossBody')}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-1 p-2 md:hidden">
-              <WritingArea />
+          }
+        >
+          <div class="flex flex-1 px-4 sm:px-6">
+            <div
+              ref={splitContainerRef}
+              class="mx-auto hidden w-full max-w-7xl flex-1 gap-2 md:flex"
+            >
+              <div class="min-w-0" style={{ width: `${sidebarWidth()}%` }}>
+                <FileBrowser />
+              </div>
+              <button
+                class="splitter-handle w-2 cursor-col-resize bg-foreground/40 transition-colors duration-100 hover:bg-foreground"
+                onPointerDown={startResize}
+                aria-label="Resize sidebar"
+              />
+              <div class="min-w-0 flex-1">
+                <WritingArea />
+              </div>
+            </div>
+
+            <div class="flex flex-1 flex-col gap-4 md:hidden">
+              <FileBrowser />
+              <div class="min-h-[60vh]">
+                <WritingArea />
+              </div>
             </div>
           </div>
-        )}
+        </Show>
       </div>
 
-      <Card className="fixed bottom-0 left-0 right-0 z-50 border-t border-foreground border-x-0 border-b-0 bg-background">
-        <CardContent className="mx-auto max-w-7xl flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <span className="font-medium">{t('status.year', { year: new Date().getFullYear() })}</span>
-            <Separator orientation="vertical" className="hidden h-3.5 sm:block" />
-            <span className="hidden sm:inline flex items-center gap-1.5">
-              <span className="inline-flex h-1.5 w-1.5 bg-foreground"></span>
-              {autosaveEnabled ? t('editor.autosave') : t('editor.autosaveOff')}
+      <Card class="fixed bottom-0 left-0 right-0 z-50 border-x-0 border-b-0 border-t bg-background">
+        <CardContent class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-xs sm:px-6">
+          <div class="flex items-center gap-3 text-muted-foreground">
+            <span class="font-medium">{t('status.year', { year: new Date().getFullYear() })}</span>
+            <span class="hidden sm:inline">•</span>
+            <span class="hidden sm:inline">
+              {settings.autosaveEnabled ? t('editor.autosave') : t('editor.autosaveOff')}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <span className="font-medium">
-              {t('status.version')} {appVersion.version}
+          <div class="flex items-center gap-2 text-muted-foreground">
+            <span class="font-medium">
+              {t('status.version')} {appVersion() ?? __APP_VERSION__}
             </span>
           </div>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

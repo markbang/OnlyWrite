@@ -1,182 +1,56 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../utils/theme-test-utils'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render as baseRender, screen, waitFor } from '@solidjs/testing-library'
 import userEvent from '@testing-library/user-event'
-import { IconDashboard, IconFileDescription } from '@tabler/icons-react'
-import { Button } from '@/components/ui/button'
-import { NavMain } from '@/components/nav-main'
-import { NavDocuments } from '@/components/nav-documents'
+import HomePage from '@/routes/index'
+import { Button } from '@/components/ui'
+import { render } from '../utils/theme-test-utils'
 
+describe('interaction states', () => {
+  it('fires click handlers for active buttons', async () => {
+    const user = userEvent.setup()
+    const onClick = vi.fn()
 
-describe('Interaction States Tests', () => {
-  describe('Button Hover States', () => {
-    it('should apply hover styles to buttons', async () => {
-      const user = userEvent.setup()
-      
-      render(
-        <Button variant="default" className="test-button">
-          Test Button
-        </Button>
-      )
-      
-      const button = screen.getByRole('button', { name: 'Test Button' })
-      expect(button).toBeInTheDocument()
-      
-      // Test hover state
-      await user.hover(button)
-      
-      // Check if hover classes are applied
-      expect(button.className).toContain('hover:')
-    })
+    baseRender(() => <Button onClick={onClick}>Press</Button>)
+    await user.click(screen.getByRole('button', { name: 'Press' }))
 
-    it('should apply focus styles to buttons', async () => {
-      const user = userEvent.setup()
-      
-      render(
-        <Button variant="default">
-          Test Button
-        </Button>
-      )
-      
-      const button = screen.getByRole('button')
-      
-      // Test focus state
-      await user.tab()
-      expect(button).toHaveFocus()
-      
-      // Check if focus styles are applied
-      expect(button).toHaveClass('focus-visible:ring-2')
-    })
+    expect(onClick).toHaveBeenCalledTimes(1)
+  })
 
-    it('should apply active/pressed styles to buttons', async () => {
-      render(
-        <Button variant="default">
-          Test Button
-        </Button>
-      )
+  it('keeps disabled buttons non-interactive', async () => {
+    const user = userEvent.setup()
+    const onClick = vi.fn()
 
-      const button = screen.getByRole('button')
+    baseRender(() => (
+      <Button disabled onClick={onClick}>
+        Disabled
+      </Button>
+    ))
 
-      fireEvent.mouseDown(button)
+    const button = screen.getByRole('button', { name: 'Disabled' })
+    await user.click(button)
 
-      expect(button.className).toContain('active:')
+    expect(button).toBeDisabled()
+    expect(onClick).not.toHaveBeenCalled()
+  })
+
+  it('switches the app language from the landing page selector', async () => {
+    render(() => <HomePage />)
+
+    const select = screen.getByLabelText('Language') as HTMLSelectElement
+    fireEvent.change(select, { target: { value: 'zh' } })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '选择文件夹' })).toBeInTheDocument()
     })
   })
 
-  describe('Navigation Hover States', () => {
-    it('should apply hover styles to navigation items', async () => {
-      const user = userEvent.setup()
-      
-      const mockNavItems = [
-        {
-          title: 'Dashboard',
-          url: '/dashboard',
-          icon: IconDashboard,
-        },
-        {
-          title: 'Documents',
-          url: '/documents',
-          icon: IconFileDescription,
-        },
-      ]
-      
-      render(<NavMain items={mockNavItems} />, { withSidebar: true })
+  it('shows the desktop-only update message in browsers', async () => {
+    render(() => <HomePage />)
 
-      const navButtons = screen.getAllByRole('button')
-      
-      for (const button of navButtons) {
-        await user.hover(button)
+    fireEvent.click(screen.getByRole('button', { name: 'Check updates' }))
 
-        // Check if hover styles are applied
-        const hasHoverClass = button.className.includes('hover:')
-        expect(hasHoverClass).toBe(true)
-      }
-    })
-
-    it('should apply focus styles to navigation items', async () => {
-      const user = userEvent.setup()
-      
-      const mockNavItems = [
-        {
-          title: 'Dashboard',
-          url: '/dashboard',
-          icon: IconDashboard,
-        },
-      ]
-      
-      render(<NavMain items={mockNavItems} />, { withSidebar: true })
-      
-      const navButton = screen.getByRole('button', { name: /dashboard/i })
-
-      navButton.focus()
-      expect(navButton).toHaveFocus()
-
-      expect(navButton).toHaveClass('focus-visible:ring-2')
-    })
-  })
-
-  describe('File Area Interaction States', () => {
-    it('should handle file selection states', async () => {
-      const user = userEvent.setup()
-      
-      const mockDocuments = [
-        {
-          name: 'test-document.md',
-          url: '/documents/test-document',
-          icon: IconFileDescription,
-        },
-      ]
-
-      render(<NavDocuments items={mockDocuments} />, { withSidebar: true })
-
-      const documentLink = screen.getByRole('link', { name: /test-document\.md/i })
-
-      await user.hover(documentLink)
-
-      expect(documentLink.className).toContain('hover:')
-    })
-  })
-
-  describe('Transition Consistency', () => {
-    it('should apply consistent transition timing', () => {
-      render(
-        <div className="transition-colors duration-200">
-          <Button variant="default">Test Button</Button>
-        </div>
-      )
-
-      const container = screen.getByRole('button').parentElement
-      expect(container).toHaveClass('transition-colors')
-      expect(container).toHaveClass('duration-200')
-    })
-
-    it('should apply smooth color transitions', async () => {
-      const user = userEvent.setup()
-
-      render(
-        <Button variant="default" className="transition-colors">
-          Hover Me
-        </Button>
-      )
-
-      const button = screen.getByRole('button')
-
-      await user.hover(button)
-
-      expect(button.className).toContain('transition-colors')
-    })
-  })
-
-  describe('Selection States', () => {
-    it('should apply consistent selection colors', () => {
-      render(
-        <div className="selection:bg-primary/20 selection:text-primary-foreground">
-          <p>This text can be selected</p>
-        </div>
-      )
-      
-      const textElement = screen.getByText('This text can be selected')
-      expect(textElement.parentElement).toHaveClass('selection:bg-primary/20')
-      expect(textElement.parentElement).toHaveClass('selection:text-primary-foreground')
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalled()
     })
   })
 })

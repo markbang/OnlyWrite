@@ -1,15 +1,13 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { useI18n } from '@/hooks/useI18n'
-import { I18nProvider } from '@/components/i18n-provider'
+import { describe, expect, it } from 'vitest'
+import { fireEvent, render, renderHook, screen, waitFor } from '@solidjs/testing-library'
+import { I18nProvider, useI18n } from '@/components/i18n-provider'
 
 function TestComponent() {
-  const { t, locale, setLocale } = useI18n()
-  
+  const { locale, setLocale, t } = useI18n()
+
   return (
     <div>
-      <p data-testid="locale">{locale}</p>
+      <p data-testid="locale">{locale()}</p>
       <p data-testid="message">{t('app.title')}</p>
       <button onClick={() => setLocale('zh')}>Switch to Chinese</button>
       <button onClick={() => setLocale('en')}>Switch to English</button>
@@ -17,53 +15,47 @@ function TestComponent() {
   )
 }
 
-describe('useI18n Hook', () => {
-  it('should provide default locale', () => {
-    render(
+describe('useI18n', () => {
+  it('provides the detected locale and translations', async () => {
+    window.localStorage.setItem('onlywrite-locale', 'en')
+
+    render(() => (
       <I18nProvider>
         <TestComponent />
       </I18nProvider>
-    )
-    
-    const localeElement = screen.getByTestId('locale')
-    expect(localeElement.textContent).toMatch(/^(en|zh)$/)
+    ))
+
+    await waitFor(() => expect(screen.getByTestId('locale')).toHaveTextContent('en'))
+    expect(screen.getByTestId('message')).toHaveTextContent('OnlyWrite')
   })
 
-  it('should translate messages', () => {
-    render(
+  it('updates locale and document language when switching', async () => {
+    render(() => (
       <I18nProvider>
         <TestComponent />
       </I18nProvider>
-    )
-    
-    const messageElement = screen.getByTestId('message')
-    expect(messageElement.textContent).toBe('OnlyWrite')
+    ))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to Chinese' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('locale')).toHaveTextContent('zh')
+      expect(document.documentElement.lang).toBe('zh')
+    })
+
+    expect(screen.getByTestId('message')).toHaveTextContent('OnlyWrite')
   })
 
-  it('should throw error when used outside provider', () => {
-    const consoleError = console.error
-    console.error = () => {}
-    
-    expect(() => {
-      render(<TestComponent />)
-    }).toThrow('useI18n must be used within I18nProvider')
-    
-    console.error = consoleError
+  it('throws outside the provider', () => {
+    expect(() => renderHook(() => useI18n())).toThrow('useI18n must be used inside I18nProvider')
   })
 
-  it('should allow locale switching', async () => {
-    const user = userEvent.setup()
-    
-    render(
-      <I18nProvider>
-        <TestComponent />
-      </I18nProvider>
-    )
-    
-    const switchButton = screen.getByText('Switch to Chinese')
-    await user.click(switchButton)
-    
-    const localeElement = screen.getByTestId('locale')
-    expect(localeElement.textContent).toBeTruthy()
+  it('exposes translation helpers through renderHook', () => {
+    const { result } = renderHook(() => useI18n(), {
+      wrapper: (props) => <I18nProvider>{props.children}</I18nProvider>,
+    })
+
+    expect(result.locale()).toMatch(/en|zh/)
+    expect(result.t('actions.selectFolder')).toBeTruthy()
   })
 })

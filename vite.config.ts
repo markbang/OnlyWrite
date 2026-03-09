@@ -1,29 +1,38 @@
 import { defineConfig } from 'vite'
+import solid from 'vite-plugin-solid'
 import tsConfigPaths from 'vite-tsconfig-paths'
-import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { nitro } from 'nitro/vite'
+
+const host = process.env.TAURI_DEV_HOST
 
 export default defineConfig({
+  clearScreen: false,
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
+  },
   server: {
     port: 3000,
+    strictPort: true,
+    host: host || false,
+    hmr: host
+      ? {
+          protocol: 'ws',
+          host,
+          port: 3001,
+        }
+      : undefined,
+    watch: {
+      ignored: ['**/src-tauri/**'],
+    },
   },
   plugins: [
     tailwindcss(),
     tsConfigPaths({
       projects: ['./tsconfig.json'],
     }),
-    tanstackStart({
-      srcDirectory: 'src',
-      spa: {
-        enabled: true,
-        prerender: {
-          outputPath: '/_shell.html',
-        },
-      },
-    }),
-    viteReact(),
-    nitro(),
+    solid(),
   ],
+  build: {
+    target: 'esnext',
+  },
 })

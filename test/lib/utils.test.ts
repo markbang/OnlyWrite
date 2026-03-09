@@ -1,70 +1,42 @@
-import { describe, it, expect } from 'vitest'
-import { cn } from '@/lib/utils'
+import { describe, expect, it } from 'vitest'
+import {
+  cn,
+  countWords,
+  createId,
+  fileExtension,
+  fileNameFromPath,
+  folderNameFromPath,
+  getErrorMessage,
+} from '@/lib/utils'
 
-describe('Utility Functions', () => {
-  describe('cn() - className merger', () => {
-    it('should merge single className', () => {
-      expect(cn('text-primary')).toBe('text-primary')
-    })
+describe('utility helpers', () => {
+  it('joins truthy class names', () => {
+    expect(cn('base', false, undefined, 'active')).toBe('base active')
+  })
 
-    it('should merge multiple classNames', () => {
-      const result = cn('text-primary', 'bg-secondary')
-      expect(result).toContain('text-primary')
-      expect(result).toContain('bg-secondary')
-    })
+  it('extracts file and folder names from paths', () => {
+    expect(fileNameFromPath('/workspace/notes/draft.md')).toBe('draft.md')
+    expect(folderNameFromPath('/workspace/notes')).toBe('notes')
+  })
 
-    it('should handle conditional classNames', () => {
-      const isActive = true
-      const result = cn('base-class', isActive && 'active-class')
-      expect(result).toContain('base-class')
-      expect(result).toContain('active-class')
-    })
+  it('reads file extensions', () => {
+    expect(fileExtension('draft.md')).toBe('md')
+    expect(fileExtension('archive.tar.gz')).toBe('gz')
+    expect(fileExtension('README')).toBe('')
+  })
 
-    it('should handle falsy conditional classNames', () => {
-      const isActive = false
-      const result = cn('base-class', isActive && 'active-class')
-      expect(result).toBe('base-class')
-      expect(result).not.toContain('active-class')
-    })
+  it('counts latin words and cjk characters', () => {
+    expect(countWords('hello solid world')).toBe(3)
+    expect(countWords('你好 Solid')).toBe(3)
+  })
 
-    it('should merge conflicting Tailwind classes correctly', () => {
-      const result = cn('p-4', 'p-8')
-      expect(result).toBe('p-8')
-      expect(result).not.toContain('p-4')
-    })
+  it('normalizes error messages', () => {
+    expect(getErrorMessage(new Error('boom'))).toBe('boom')
+    expect(getErrorMessage('plain error')).toBe('plain error')
+    expect(getErrorMessage({})).toBe('Something went wrong.')
+  })
 
-    it('should handle arrays of classNames', () => {
-      const result = cn(['text-primary', 'bg-secondary'])
-      expect(result).toContain('text-primary')
-      expect(result).toContain('bg-secondary')
-    })
-
-    it('should handle empty input', () => {
-      expect(cn()).toBe('')
-    })
-
-    it('should handle undefined and null', () => {
-      const result = cn('base', undefined, null, 'other')
-      expect(result).toContain('base')
-      expect(result).toContain('other')
-    })
-
-    it('should handle complex real-world scenarios', () => {
-      const variant = 'primary'
-      const size = 'lg'
-      const disabled = false
-      
-      const result = cn(
-        'button-base',
-        variant === 'primary' && 'bg-primary text-primary-foreground',
-        size === 'lg' && 'px-8 py-4',
-        disabled && 'opacity-50 cursor-not-allowed'
-      )
-      
-      expect(result).toContain('button-base')
-      expect(result).toContain('bg-primary')
-      expect(result).toContain('px-8')
-      expect(result).not.toContain('opacity-50')
-    })
+  it('creates prefixed ids', () => {
+    expect(createId('toast')).toMatch(/^toast-/)
   })
 })

@@ -4,7 +4,7 @@ This directory contains comprehensive tests for theme consistency, color harmony
 
 ## Test Structure
 
-### Unit Tests (Vitest + React Testing Library)
+### Unit Tests (Vitest + Solid Testing Library)
 
 - **`theme-consistency.test.tsx`** - Tests theme consistency across components in light and dark modes
 - **`interaction-states.test.tsx`** - Tests hover, focus, and active states for interactive elements
@@ -102,30 +102,31 @@ pnpm test:visual:ui
 ## Test Configuration
 
 ### Vitest Configuration (`vitest.config.ts`)
-- Configured with React plugin and jsdom environment
-- Path aliases matching the main application
+- Configured with the Solid Vite plugin and jsdom environment
+- Path aliases matching the Solid application source
 - Global test utilities and setup
 
 ### Playwright Configuration (`playwright.config.ts`)
 - Configured for visual regression testing
-- Multiple browser support (Chromium, WebKit)
+- Chromium runs by default for stable local snapshots
+- WebKit can be enabled with `PLAYWRIGHT_ENABLE_WEBKIT=1` after installing its system dependencies
 - Automatic dev server startup
 
 ### Test Setup (`test/setup.ts`)
-- React Testing Library configuration
+- Solid Testing Library configuration
 - Mock implementations for browser APIs
-- Global test utilities
+- Global test utilities and store resets
 
 ## Visual Regression Testing
 
-Visual regression tests capture screenshots of components in different states and themes:
+Visual regression tests capture screenshots of the Solid application in different states and themes:
 
-- **Theme consistency** - Screenshots of components in light/dark themes
-- **Interaction states** - Screenshots of hover, focus, and active states
-- **Color harmony** - Overall application color scheme validation
-- **Transition smoothness** - Theme switching visual validation
+- **Landing page** - Light and dark theme snapshots for the Solid home route
+- **Login page** - Localized login screen snapshot in Chinese
+- **Dashboard** - Seeded workspace state rendered through the Solid dashboard route
+- **Interaction states** - Hover snapshot for the primary landing action
 
-Screenshots are stored in `test-results/` and compared against baseline images.
+Baseline screenshots are stored in `test/visual/theme-visual-regression.spec.ts-snapshots/`.
 
 ## Accessibility Testing
 

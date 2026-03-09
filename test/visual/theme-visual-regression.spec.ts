@@ -1,72 +1,168 @@
-import { test, expect } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
-test.describe('Theme Visual Regression Tests', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/')
-    // Wait for page to load
-    await page.waitForLoadState('networkidle')
-  })
+const FIXED_NOW = '2026-03-09T12:00:00.000Z'
 
-  test('should maintain visual consistency in light theme', async ({ page }) => {
-    // Ensure light theme is active
-    await page.evaluate(() => {
-      document.documentElement.classList.remove('dark')
-      document.documentElement.classList.add('light')
-    })
-    
-    // Wait for theme to apply
-    await page.waitForTimeout(500)
-    
-    // Take screenshot of main interface
-    await expect(page).toHaveScreenshot('light-theme-main.png')
-  })
+type SeedOptions = {
+  theme?: 'light' | 'dark'
+  locale?: 'en' | 'zh'
+  workspace?: {
+    folderPath: string | null
+    selectedFilePath: string | null
+    recentFiles: Array<{
+      path: string
+      name: string
+      accessedAt: number
+    }>
+  }
+}
 
-  test('should maintain visual consistency in dark theme', async ({ page }) => {
-    // Switch to dark theme
-    await page.evaluate(() => {
-      document.documentElement.classList.remove('light')
-      document.documentElement.classList.add('dark')
-    })
-    
-    // Wait for theme to apply
-    await page.waitForTimeout(500)
-    
-    // Take screenshot of main interface
-    await expect(page).toHaveScreenshot('dark-theme-main.png')
-  })
+async function seedApp(page: Page, options: SeedOptions = {}) {
+  const {
+    theme = 'light',
+    locale = 'en',
+    workspace = {
+      folderPath: null,
+      selectedFilePath: null,
+      recentFiles: [],
+    },
+  } = options
 
-  test('should show consistent button interactions', async ({ page }) => {
-    // Test button hover states if buttons exist
-    const buttons = page.locator('button').first()
-    if (await buttons.isVisible()) {
-      await buttons.hover()
-      await expect(buttons).toHaveScreenshot('button-hover-state.png')
+  await page.addInitScript(
+    ({ fixedNow, nextTheme, nextLocale, nextWorkspace }) => {
+      const originalDate = Date
+      const fixedTime = new originalDate(fixedNow).valueOf()
+
+      class MockDate extends originalDate {
+        constructor(...args: ConstructorParameters<DateConstructor>) {
+          if (args.length === 0) {
+            super(fixedTime)
+            return
+          }
+
+          super(...args)
+        }
+
+        static now() {
+          return fixedTime
+        }
+      }
+
+      MockDate.parse = originalDate.parse
+      MockDate.UTC = originalDate.UTC
+      Object.defineProperty(window, 'Date', {
+        configurable: true,
+        writable: true,
+        value: MockDate,
+      })
+
+      window.localStorage.clear()
+      window.localStorage.setItem('onlywrite-locale', nextLocale)
+      window.localStorage.setItem(
+        'onlywrite-settings',
+        JSON.stringify({
+          theme: nextTheme,
+          autosaveEnabled: true,
+          autosaveInterval: 5,
+          fontSize: 16,
+          lineHeight: 1.8,
+          shortcuts: {
+            save: 'mod+s',
+            newFile: 'mod+n',
+            openFolder: 'mod+o',
+          },
+        })
+      )
+      window.localStorage.setItem('onlywrite-workspace', JSON.stringify(nextWorkspace))
+    },
+    {
+      fixedNow: FIXED_NOW,
+      nextTheme: theme,
+      nextLocale: locale,
+      nextWorkspace: workspace,
+    }
+  )
+}
+
+async function openStablePage(page: Page, path: string) {
+  await page.goto(path)
+  await page.waitForLoadState('networkidle')
+  await page.evaluate(async () => {
+    if ('fonts' in document) {
+      await document.fonts.ready
     }
   })
+  await page.waitForTimeout(150)
+}
 
-  test('should maintain color harmony', async ({ page }) => {
-    // Test overall color harmony
-    await expect(page).toHaveScreenshot('color-harmony-overview.png')
+test.describe('Theme visual regression', () => {
+  test('landing page in light theme', async ({ page }) => {
+    await seedApp(page, { theme: 'light', locale: 'en' })
+    await openStablePage(page, '/')
+
+    await expect(page).toHaveScreenshot('landing-light.png', {
+      animations: 'disabled',
+      fullPage: true,
+    })
   })
 
-  test('should show smooth theme transitions', async ({ page }) => {
-    // Start in light theme
-    await page.evaluate(() => {
-      document.documentElement.classList.remove('dark')
-      document.documentElement.classList.add('light')
+  test('landing page in dark theme', async ({ page }) => {
+    await seedApp(page, { theme: 'dark', locale: 'en' })
+    await openStablePage(page, '/')
+
+    await expect(page).toHaveScreenshot('landing-dark.png', {
+      animations: 'disabled',
+      fullPage: true,
     })
-    await page.waitForTimeout(200)
-    
-    // Switch to dark theme
-    await page.evaluate(() => {
-      document.documentElement.classList.remove('light')
-      document.documentElement.classList.add('dark')
+  })
+
+  test('login page in chinese', async ({ page }) => {
+    await seedApp(page, { theme: 'light', locale: 'zh' })
+    await openStablePage(page, '/login')
+
+    await expect(page).toHaveScreenshot('login-zh.png', {
+      animations: 'disabled',
+      fullPage: true,
     })
-    
-    // Wait for transition to complete
-    await page.waitForTimeout(500)
-    
-    // Take after screenshot
-    await expect(page).toHaveScreenshot('after-theme-transition.png')
+  })
+
+  test('dashboard with seeded workspace data', async ({ page }) => {
+    await seedApp(page, {
+      theme: 'dark',
+      locale: 'en',
+      workspace: {
+        folderPath: '/workspace/onlywrite',
+        selectedFilePath: null,
+        recentFiles: [
+          {
+            path: '/workspace/onlywrite/draft.md',
+            name: 'draft.md',
+            accessedAt: new Date('2026-03-09T08:00:00.000Z').valueOf(),
+          },
+          {
+            path: '/workspace/onlywrite/outline.md',
+            name: 'outline.md',
+            accessedAt: new Date('2026-03-08T19:30:00.000Z').valueOf(),
+          },
+        ],
+      },
+    })
+    await openStablePage(page, '/dashboard')
+
+    await expect(page).toHaveScreenshot('dashboard-dark.png', {
+      animations: 'disabled',
+      fullPage: true,
+    })
+  })
+
+  test('landing primary action hover state', async ({ page }) => {
+    await seedApp(page, { theme: 'light', locale: 'en' })
+    await openStablePage(page, '/')
+
+    const button = page.getByRole('button', { name: 'Select folder' })
+    await button.hover()
+
+    await expect(button).toHaveScreenshot('landing-select-folder-hover.png', {
+      animations: 'disabled',
+    })
   })
 })
